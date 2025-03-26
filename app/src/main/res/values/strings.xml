@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">HumanReactor</string>
+
+    <!-- 主界面 -->
+    <string name="ready">就緒</string>
+    <string name="add">新增</string>
+    <string name="train">訓練</string>
+    <string name="test">測試</string>
+
+    <!-- 新增動作對話框 -->
+    <string name="add_gesture">新增自定義動作</string>
+    <string name="gesture_name">動作名稱</string>
+    <string name="select_color">選擇代表顏色</string>
+    <string name="red">紅色</string>
+    <string name="green">綠色</string>
+    <string name="blue">藍色</string>
+    <string name="yellow">黃色</string>
+    <string name="purple">紫色</string>
+    <string name="add_confirm">新增</string>
+    <string name="cancel">取消</string>
+
+    <!-- 訓練模式 -->
+    <string name="select_gesture_to_train">選擇要訓練的動作</string>
+    <string name="training">訓練中: %1$s</string>
+    <string name="training_progress">訓練中: %1$s (%2$d%%)</string>
+    <string name="training_complete">%1$s 訓練完成！</string>
+    <string name="start_training">開始訓練 \'%1$s\' 動作</string>
+
+    <!-- 測試模式 -->
+    <string name="testing">測試中...</string>
+    <string name="recognized">辨認出: %1$s</string>
+    <string name="start_testing">開始測試模式</string>
+
+    <!-- 錯誤訊息 -->
+    <string name="error_no_name">請輸入動作名稱</string>
+    <string name="error_add_gesture_first">請先新增動作</string>
+    <string name="error_train_gesture_first">請先訓練至少一個動作</string>
+    <string name="error_camera_permission">需要相機權限才能使用此功能</string>
+    <string name="error_camera_init">相機啟動失敗: %1$s</string>
+    <string name="error_pose_detection">姿勢檢測錯誤: %1$s</string>
+
+    <!-- 其他 -->
+    <string name="gesture_added">已新增 \'%1$s\' 動作</string>
+</resources>
