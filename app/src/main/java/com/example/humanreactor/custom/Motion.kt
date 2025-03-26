@@ -1,4 +1,4 @@
-package com.example.humanreactor
+package com.example.humanreactor.custom
 
 data class Motion(
     val name: String,

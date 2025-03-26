@@ -1,4 +1,4 @@
-package com.example.humanreactor
+package com.example.humanreactor.custom
 
 // 簡化的姿勢數據結構
 data class Pose(

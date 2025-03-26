@@ -69,12 +69,16 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation(libs.androidx.activity)
     implementation(libs.androidx.cardview)
+    implementation(libs.litert.api)
+    implementation(libs.litert)
+    implementation(libs.litert.support.api)
+    implementation(libs.androidx.media3.common.ktx)
 
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-
+    implementation ("tw.edu.ntu.csie:libsvm:3.24")
 
 }

@@ -1,4 +1,4 @@
-package com.example.humanreactor
+package com.example.humanreactor.custom
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy

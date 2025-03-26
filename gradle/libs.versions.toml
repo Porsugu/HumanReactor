@@ -15,6 +15,10 @@ poseDetectionCommon = "17.0.0"
 poseDetection = "17.0.0"
 cameraView = "1.4.1"
 cardview = "1.0.0"
+litertApi = "1.2.0"
+litert = "1.2.0"
+litertSupportApi = "1.2.0"
+media3CommonKtx = "1.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +35,10 @@ pose-detection-common = { group = "com.google.mlkit", name = "pose-detection-com
 pose-detection = { group = "com.google.mlkit", name = "pose-detection", version.ref = "poseDetection" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
+litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
+litert-support-api = { group = "com.google.ai.edge.litert", name = "litert-support-api", version.ref = "litertSupportApi" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
