@@ -1,5 +1,7 @@
 package com.example.humanreactor.custom
 
+import android.util.Log
+
 class StaticPoseClassifier {
     // 存儲目標姿勢的特徵模板
     private val poseTemplates = mutableMapOf<String, List<Double>>()
@@ -18,11 +20,13 @@ class StaticPoseClassifier {
 
     // 從dataset載入所有姿勢
     fun loadFromDataset(dataset: List<Pair<List<List<Double>>, String>>) {
+        Log.d("Classifier", "dataset size: ${dataset.size}")
         dataset.forEach { (samplesList, poseName) ->
             // 計算平均特徵作為模板
             val avgFeatures = calculateAverageFeatures(samplesList)
             addPoseTemplate(poseName, avgFeatures)
         }
+
     }
 
     // 計算平均特徵
@@ -54,6 +58,16 @@ class StaticPoseClassifier {
                 bestSimilarity = similarity
                 bestMatch = poseName
             }
+        }
+
+
+        if (bestSimilarity < similarityThreshold){
+            bestMatch = "unknown"
+        }
+
+        if(bestMatch != "unknown"){
+            Log.d("Classifier", "pose: ${bestMatch}")
+            Log.d("Classifier", "pose similarity: ${bestSimilarity}")
         }
 
         return Pair(bestMatch, bestSimilarity)
@@ -92,7 +106,7 @@ class StaticPoseClassifier {
 
         // 將距離轉換為相似度（0-1範圍，1表示完全匹配）
         // sigma參數控制相似度的容忍度，較大的sigma更寬容
-        val sigma = Math.sqrt(features1.size.toDouble()) * 5
+        val sigma = Math.sqrt(features1.size.toDouble()) * 8
         return Math.exp(-(distance * distance) / (2 * sigma * sigma))
     }
 

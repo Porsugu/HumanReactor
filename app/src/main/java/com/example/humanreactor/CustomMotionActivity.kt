@@ -31,6 +31,8 @@ import com.example.humanreactor.custom.KeypointView
 import com.example.humanreactor.custom.Motion
 import com.example.humanreactor.custom.MotionAnalyzer
 import com.example.humanreactor.custom.Pose
+import com.example.humanreactor.custom.PoseLinearClassifier
+import com.example.humanreactor.custom.PoseNeuralNetwork
 import com.example.humanreactor.custom.Position
 import com.example.humanreactor.custom.StaticPoseClassifier
 
@@ -65,6 +67,8 @@ class CustomMotionActivity : AppCompatActivity() {
 
     //    private val classifier = MotionSVMClassifier()
     private val classifier = StaticPoseClassifier()
+//    private val classifier = PoseLinearClassifier()
+//    private val classifier = PoseNeuralNetwork()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -226,14 +230,21 @@ class CustomMotionActivity : AppCompatActivity() {
             runOnUiThread {
                 colorIndicatorView.visibility = View.INVISIBLE
                 statusTextView.text = "正在準備數據集..."
-                Log.d("SVMClassifier", "Num classes: ${motions.size}")
+                Log.d("Classifier", "Num classes: ${motions.size}")
                 val dataset = prepareDataset(motions)
                 Thread.sleep(500)
                 statusTextView.text = "正在訓練模型..."
 //                classifier.train(dataset)
                 classifier.loadFromDataset(dataset)
                 classifier.setSimilarityThreshold(0.75)
-                Log.d("SVMClassifier", "Num classes A4: ${motions.size}")
+//                classifier.setLearningParameters(0.01, numEpochs = 200)
+
+//                classifier.train(dataset)
+                val inputDimension = dataset[0].first[0].size     // 特徵維度
+                val numClasses = dataset.map { it.second }.distinct().size  // 類別數量
+
+//                classifier.train(dataset)
+                Log.d("Classifier", "Num classes A4: ${motions.size}")
                 Thread.sleep(500)
                 statusTextView.text = "所有動作訓練完成！"
 
@@ -301,13 +312,33 @@ class CustomMotionActivity : AppCompatActivity() {
             return listOf() // 数据不完整，跳过
         }
 
+//        return listOf(
+//            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀角度
+//            calculateAngle(leftWrist, leftElbow, leftShoulder), // 左手肘角度
+//            calculateAngle(rightWrist, rightElbow, rightShoulder), // 右手肘角度
+//            calculateAngle(leftElbow, leftShoulder, leftHip), // 左上臂角度
+//            calculateAngle(rightElbow, rightShoulder, rightHip), // 右上臂角度
+//            calculateAngle(leftShoulder, leftHip, rightHip) // 身體傾斜角度
+//        )
         return listOf(
-            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀角度
+            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀-鼻子-肩膀角度
             calculateAngle(leftWrist, leftElbow, leftShoulder), // 左手肘角度
             calculateAngle(rightWrist, rightElbow, rightShoulder), // 右手肘角度
             calculateAngle(leftElbow, leftShoulder, leftHip), // 左上臂角度
             calculateAngle(rightElbow, rightShoulder, rightHip), // 右上臂角度
-            calculateAngle(leftShoulder, leftHip, rightHip) // 身體傾斜角度
+            calculateAngle(leftShoulder, leftHip, rightHip), // 身體傾斜角度
+            calculateAngle(rightShoulder, rightHip, leftHip), // 身體右側傾斜角度
+            calculateAngle(nose, leftShoulder, leftElbow), // 鼻子-左肩-左肘角度
+            calculateAngle(nose, rightShoulder, rightElbow), // 鼻子-右肩-右肘角度
+            calculateAngle(leftElbow, leftShoulder, rightShoulder), // 左肘-左肩-右肩角度
+            calculateAngle(rightElbow, rightShoulder, leftShoulder), // 右肘-右肩-左肩角度
+            calculateAngle(nose, leftShoulder, leftHip), // 鼻子-左肩-左髖角度
+            calculateAngle(nose, rightShoulder, rightHip), // 鼻子-右肩-右髖角度
+            calculateAngle(leftShoulder, rightShoulder, rightHip), // 左肩-右肩-右髖角度
+            calculateAngle(leftShoulder, rightShoulder, nose), // 左肩-右肩-鼻子角度
+            calculateAngle(leftShoulder, nose, rightShoulder), // 左肩-鼻子-右肩角度
+            calculateAngle(leftHip, leftShoulder, leftElbow), // 左髖-左肩-左肘角度
+            calculateAngle(rightHip, rightShoulder, rightElbow) // 左髖-左肩-左肘角度
         )
     }
 
@@ -378,60 +409,6 @@ class CustomMotionActivity : AppCompatActivity() {
         Toast.makeText(this, "動作 '$name' 新增成功", Toast.LENGTH_SHORT).show()
     }
 
-
-    // 檢查姿勢是否有效（包含足夠的關鍵點且具有足夠的置信度）
-    private fun isPoseValid(pose: Pose): Boolean {
-        val minKeypoints = 13 // 要求更多關鍵點
-        val minConfidence = 0.75f // 提高最小置信度要求
-
-        // 檢查關鍵點數量
-        if (pose.keypoints.size < minKeypoints) {
-            Log.d("PoseValidation", "關鍵點數量不足: ${pose.keypoints.size} < $minKeypoints")
-            return false
-        }
-
-        // 檢查上半身關鍵點是否存在且置信度足夠
-        val requiredKeypoints = listOf(
-            KeypointType.LEFT_SHOULDER, KeypointType.RIGHT_SHOULDER,
-            KeypointType.LEFT_ELBOW, KeypointType.RIGHT_ELBOW,
-            KeypointType.LEFT_WRIST, KeypointType.RIGHT_WRIST,
-            KeypointType.NOSE
-        )
-
-        // 確保所有必需的關鍵點都存在且置信度足夠
-        for (keyType in requiredKeypoints) {
-            val keypoint = pose.keypoints.find { it.type == keyType }
-            if (keypoint == null) {
-                Log.d("PoseValidation", "缺少關鍵點: $keyType")
-                return false
-            }
-            if (keypoint.score < minConfidence) {
-                Log.d("PoseValidation", "關鍵點 $keyType 置信度不足: ${keypoint.score} < $minConfidence")
-                return false
-            }
-        }
-
-//        // 檢查關鍵點之間的相對位置是否合理
-//        val leftShoulder = pose.keypoints.find { it.type == KeypointType.LEFT_SHOULDER }?.position
-//        val rightShoulder = pose.keypoints.find { it.type == KeypointType.RIGHT_SHOULDER }?.position
-//
-//        if (leftShoulder != null && rightShoulder != null) {
-//            // 計算肩膀寬度
-//            val shoulderWidth = Math.sqrt(
-//                Math.pow((leftShoulder.x - rightShoulder.x).toDouble(), 2.0) +
-//                        Math.pow((leftShoulder.y - rightShoulder.y).toDouble(), 2.0)
-//            )
-//
-//            // 如果肩膀寬度太小，可能是檢測不准確
-//            if (shoulderWidth < 50) {
-//                Log.d("PoseValidation", "肩膀寬度太小: $shoulderWidth < 50")
-//                return false
-//            }
-//        }
-
-        return true
-    }
-
     // 新增一個處理器和方法來獲取當前姿勢
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private var currentPoseData: Pose? = null
@@ -474,7 +451,7 @@ class CustomMotionActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun startActualTesting(motion: Motion) {
+    private fun startActualTesting2(motion: Motion) {
         // 實際測試邏輯
         statusTextView.text = "測試動作: ${motion.name}，請做出相應姿勢"
 
@@ -482,7 +459,7 @@ class CustomMotionActivity : AppCompatActivity() {
         var motionDetected = false
 
         // 為了更準確地識別動作，需要連續多次檢測到相同姿勢才算成功
-        val requiredSuccessiveDetections = 5 // 增加到需要連續檢測到5次
+        val requiredSuccessiveDetections = 3 // 增加到需要連續檢測到5次
         var successiveDetectionCount = 0
 
         // 保存之前的檢測結果，用於計算穩定性
@@ -490,12 +467,12 @@ class CustomMotionActivity : AppCompatActivity() {
         val historyMaxSize = 10 // 保存最近10次的結果
 
         // 設置倒計時，如果在規定時間內沒有檢測到動作，則顯示失敗
-        object : CountDownTimer(2000, 10) { // 增加到20秒
+        object : CountDownTimer(20000, 100) { // 增加到20秒
             override fun onTick(millisUntilFinished: Long) {
                 // 在每個tick檢查當前姿勢
                 val currentPose = getCurrentPose()
                 if (currentPose != null && !motionDetected) {
-                    val isDetected = detectMotion(currentPose, motion)
+                    val isDetected = detectMotion2(currentPose, motion)
 
                     // 添加到歷史記錄
                     detectionHistory.add(isDetected)
@@ -504,7 +481,7 @@ class CustomMotionActivity : AppCompatActivity() {
                     }
 
                     // 計算最近的檢測穩定性
-                    val stability = if (detectionHistory.size >= 6) {
+                    val stability = if (detectionHistory.size >= 1) {
                         detectionHistory.takeLast(3).count { it } / 3.0
                     } else {
                         0.0
@@ -555,86 +532,19 @@ class CustomMotionActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun startActualTesting2(motion: Motion) {
-        // 實際測試邏輯
-        statusTextView.text = "測試動作: ${motion.name}，請做出相應姿勢"
+    private fun detectMotion2(pose: Pose, motion: Motion): Boolean {
+        // 實際的姿勢檢測邏輯，使用上半身關節角度進行比較
 
-        // 設置一個標誌以跟踪是否已經檢測到動作
-        var motionDetected = false
+        // 首先檢查姿勢是否有效
+        if (!hasRequiredKeypoints(pose)) {
+            Log.d("MotionDetection", "姿勢無效，無法進行檢測")
+            return false
+        }
 
-        // 為了更準確地識別動作，需要連續多次檢測到相同姿勢才算成功
-        val requiredSuccessiveDetections = 5 // 增加到需要連續檢測到5次
-        var successiveDetectionCount = 0
+        val features = calculateAngles(pose)
+        val predictClass = classifier.predict(features)
 
-        // 保存之前的檢測結果，用於計算穩定性
-        val detectionHistory = mutableListOf<Boolean>()
-        val historyMaxSize = 10 // 保存最近10次的結果
-
-        // 設置倒計時，如果在規定時間內沒有檢測到動作，則顯示失敗
-        object : CountDownTimer(20000, 100) { // 增加到20秒
-            override fun onTick(millisUntilFinished: Long) {
-                // 在每個tick檢查當前姿勢
-                val currentPose = getCurrentPose()
-                if (currentPose != null && !motionDetected) {
-//                    val isDetected = detectMotion(currentPose, motion)
-                    val isDetected = detectMotion2(currentPose, motion)
-
-                    // 添加到歷史記錄
-                    detectionHistory.add(isDetected)
-                    if (detectionHistory.size > historyMaxSize) {
-                        detectionHistory.removeAt(0)
-                    }
-
-                    // 計算最近的檢測穩定性
-                    val stability = if (detectionHistory.size >= 3) {
-                        detectionHistory.takeLast(3).count { it } / 3.0
-                    } else {
-                        0.0
-                    }
-
-                    if (isDetected) {
-                        successiveDetectionCount++
-
-                        // 如果連續多次檢測到且檢測穩定性高，則認為成功
-                        if (successiveDetectionCount >= requiredSuccessiveDetections && stability >= 0.8) {
-                            motionDetected = true
-                            statusTextView.text = "成功識別動作: ${motion.name}!"
-                            Toast.makeText(this@CustomMotionActivity, "測試成功!", Toast.LENGTH_SHORT).show()
-                            cancel() // 停止計時器
-
-                            // 延遲一段時間後重置UI
-                            handler.postDelayed({
-                                selectedMotion = null
-                                colorIndicatorView.visibility = View.GONE
-                            }, 2000)
-                        }
-                    } else {
-                        // 如果這次沒檢測到，重置連續計數
-                        successiveDetectionCount = 0
-                    }
-                }
-
-                // 更新剩餘時間
-                if (!motionDetected) {
-                    val secondsLeft = millisUntilFinished / 1000
-                    statusTextView.text = "請做出 ${motion.name} 動作... (${secondsLeft}秒)"
-                    if (successiveDetectionCount > 0) {
-                        statusTextView.text = "${statusTextView.text} (檢測中: $successiveDetectionCount/$requiredSuccessiveDetections)"
-                    }
-                }
-            }
-
-            override fun onFinish() {
-                if (!motionDetected) {
-                    statusTextView.text = "未能識別動作，請重試"
-                    Toast.makeText(this@CustomMotionActivity, "無法識別此動作，請確保正確做出姿勢", Toast.LENGTH_SHORT).show()
-
-                    // 重置UI
-                    selectedMotion = null
-                    colorIndicatorView.visibility = View.GONE
-                }
-            }
-        }.start()
+        return predictClass.first  == motion.name
     }
 
     private fun startCamera() {
@@ -680,22 +590,22 @@ class CustomMotionActivity : AppCompatActivity() {
         // 更新當前姿勢數據，用於訓練和測試
         currentPoseData = poses.first()
 
-        val currentMotion = selectedMotion ?: return
+//        val currentMotion = selectedMotion ?: return
         val pose = poses.first()
         drawKeypoints(pose)
 
-        runOnUiThread {
-            when {
-                currentMotion.isTrained && statusTextView.text.toString().startsWith("正在測試") ||
-                        statusTextView.text.toString().startsWith("測試動作") -> {
-                    // 測試模式下檢測姿勢
-                    val detected = detectMotion(poses.first(), currentMotion)
-                    if (detected) {
-                        statusTextView.text = "檢測到動作: ${currentMotion.name}"
-                    }
-                }
-            }
-        }
+//        runOnUiThread {
+//            when {
+//                currentMotion.isTrained && statusTextView.text.toString().startsWith("正在測試") ||
+//                        statusTextView.text.toString().startsWith("測試動作") -> {
+//                    // 測試模式下檢測姿勢
+//                    val detected = detectMotion2(poses.first(), currentMotion)
+//                    if (detected) {
+//                        statusTextView.text = "檢測到動作: ${currentMotion.name}"
+//                    }
+//                }
+//            }
+//        }
     }
 
     // 添加關鍵點繪製方法
@@ -756,157 +666,6 @@ class CustomMotionActivity : AppCompatActivity() {
         return connections
     }
 
-    private fun detectMotion(pose: Pose, motion: Motion): Boolean {
-        // 實際的姿勢檢測邏輯，使用上半身關節角度進行比較
-
-        // 首先檢查姿勢是否有效
-        if (!isPoseValid(pose)) {
-            Log.d("MotionDetection", "姿勢無效，無法進行檢測")
-            return false
-        }
-
-        val keypoints = pose.keypoints
-
-        // 獲取左右肩、肘、腕關鍵點
-        val nose = keypoints.find{it.type == KeypointType.NOSE}?.position?: return false
-        val leftShoulder = keypoints.find { it.type == KeypointType.LEFT_SHOULDER }?.position ?: return false
-        val rightShoulder = keypoints.find { it.type == KeypointType.RIGHT_SHOULDER }?.position ?: return false
-        val leftElbow = keypoints.find { it.type == KeypointType.LEFT_ELBOW }?.position ?: return false
-        val rightElbow = keypoints.find { it.type == KeypointType.RIGHT_ELBOW }?.position ?: return false
-        val leftWrist = keypoints.find { it.type == KeypointType.LEFT_WRIST }?.position ?: return false
-        val rightWrist = keypoints.find { it.type == KeypointType.RIGHT_WRIST }?.position ?: return false
-
-        // 計算肩膀角度 (肩膀連線與水平線的角度)
-        val shoulderAngle = calculateAngle(
-            rightShoulder.x, rightShoulder.y,
-            nose.x, nose.y,
-            leftShoulder.x, leftShoulder.y
-        )
-
-        // 計算左右手肘角度
-        val leftElbowAngle = calculateAngle(
-            leftShoulder.x, leftShoulder.y,
-            leftElbow.x, leftElbow.y,
-            leftWrist.x, leftWrist.y
-        )
-
-        val rightElbowAngle = calculateAngle(
-            rightShoulder.x, rightShoulder.y,
-            rightElbow.x, rightElbow.y,
-            rightWrist.x, rightWrist.y
-        )
-
-        // 計算左右腕相對於肘部的角度
-        val leftWristAngle = calculateAngle(
-            leftShoulder.x, leftShoulder.y,
-            leftWrist.x, leftWrist.y,
-            leftElbow.x, leftElbow.y,
-        )
-
-        val rightWristAngle = calculateAngle(
-            rightShoulder.x, rightShoulder.y,
-            rightWrist.x, rightWrist.y,
-            rightElbow.x, rightElbow.y,
-        )
-
-        val rightArmAngle = calculateAngle(
-            rightShoulder.x, rightShoulder.y,
-            rightElbow.x, rightElbow.y,
-            leftShoulder.x, leftShoulder.y)
-
-        val leftArmAngle = calculateAngle(
-            leftShoulder.x, leftShoulder.y,
-            leftElbow.x, leftElbow.y,
-            rightShoulder.x, rightShoulder.y)
-
-        // 如果這是訓練階段且動作還未設定角度，保存這些角度到動作中
-        if (!motion.hasAngles()) {
-            motion.shoulderAngle = shoulderAngle
-            motion.leftElbowAngle = leftElbowAngle
-            motion.rightElbowAngle = rightElbowAngle
-            motion.leftWristAngle = leftWristAngle
-            motion.rightWristAngle = rightWristAngle
-            motion.rightArmAngle = rightArmAngle
-            motion.leftArmAngle = leftArmAngle
-            return true
-        }
-
-        // 在測試階段，比較當前角度與已保存的角度
-        // 降低容差，使檢測更嚴格
-        val shoulderTolerance = 10.0 // 非常嚴格的角度容差
-        val elbowTolerance = 25.0
-        val wristTolerance = 20.0
-        val armTolerance = 15.0
-
-        val shoulderMatch = Math.abs(shoulderAngle - motion.shoulderAngle) <= shoulderTolerance
-        val leftElbowMatch = Math.abs(leftElbowAngle - motion.leftElbowAngle) <= elbowTolerance
-        val rightElbowMatch = Math.abs(rightElbowAngle - motion.rightElbowAngle) <= elbowTolerance
-        val leftWristMatch = Math.abs(leftWristAngle - motion.leftWristAngle) <= wristTolerance
-        val rightWristMatch = Math.abs(rightWristAngle - motion.rightWristAngle) <= wristTolerance
-        val rightArmAngleMatch = Math.abs(rightArmAngle - motion.rightArmAngle) <= armTolerance
-        val leftArmAngleMatch = Math.abs(leftArmAngle - motion.leftArmAngle) <= armTolerance
-
-        // 記錄所有角度差異，用於調試
-        Log.d("MotionDetection", "============================================")
-        Log.d("MotionDetection", "肩部差異: ${Math.abs(shoulderAngle - motion.shoulderAngle)}")
-        Log.d("MotionDetection", "左肘差異: ${Math.abs(leftElbowAngle - motion.leftElbowAngle)}")
-        Log.d("MotionDetection", "右肘差異: ${Math.abs(rightElbowAngle - motion.rightElbowAngle)}")
-        Log.d("MotionDetection", "左腕差異: ${Math.abs(leftWristAngle - motion.leftWristAngle)}")
-        Log.d("MotionDetection", "右腕差異: ${Math.abs(rightWristAngle - motion.rightWristAngle)}")
-        Log.d("MotionDetection", "左上臂差異: ${Math.abs(leftArmAngle - motion.leftArmAngle)}")
-        Log.d("MotionDetection", "右上臂差異: ${Math.abs(rightArmAngle - motion.rightArmAngle)}")
-        Log.d("MotionDetection", "============================================")
-        // 更嚴格的匹配邏輯：需要肩膀和至少兩組其他關節角度匹配
-        val jointMatches = listOf(leftElbowMatch, rightElbowMatch, leftWristMatch, rightWristMatch,rightArmAngleMatch,leftArmAngleMatch)
-        val matchCount = jointMatches.count { it }
-
-        val matchResult = shoulderMatch && matchCount >= 6
-
-        // 記錄詳細的匹配信息，有助於調試
-        if (matchResult) {
-            Log.d("MotionDetection", "檢測到匹配動作: ${motion.name}")
-            Log.d("MotionDetection", "匹配關節數量: $matchCount")
-        }
-
-        return matchResult
-    }
-
-    private fun detectMotion2(pose: Pose, motion: Motion): Boolean {
-        // 實際的姿勢檢測邏輯，使用上半身關節角度進行比較
-
-        // 首先檢查姿勢是否有效
-        if (!hasRequiredKeypoints(pose)) {
-            Log.d("MotionDetection", "姿勢無效，無法進行檢測")
-            return false
-        }
-
-        val features = calculateAngles(pose)
-        val predictClass = classifier.predict(features)
-
-        return predictClass.first  == motion.name
-    }
-
-    // 計算三點形成的角度（以度為單位）
-    private fun calculateAngle(x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float): Double {
-        // 計算兩個向量
-        val v1x = x1 - x2
-        val v1y = y1 - y2
-        val v2x = x3 - x2
-        val v2y = y3 - y2
-
-        // 計算點積
-        val dotProduct = v1x * v2x + v1y * v2y
-
-        // 計算向量長度
-        val v1Length = Math.sqrt((v1x * v1x + v1y * v1y).toDouble())
-        val v2Length = Math.sqrt((v2x * v2x + v2y * v2y).toDouble())
-
-        // 計算角度（弧度）
-        val cosAngle = dotProduct / (v1Length * v2Length)
-
-        // 轉換為度
-        return Math.toDegrees(Math.acos(cosAngle.coerceIn(-1.0, 1.0)))
-    }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
