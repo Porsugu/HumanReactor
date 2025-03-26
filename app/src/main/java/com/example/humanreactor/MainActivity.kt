@@ -16,9 +16,16 @@ class MainActivity : AppCompatActivity() {
         // 获取按钮的引用
         val goToSecondActivityButton = findViewById<Button>(R.id.custom_btn)
 
+        val goAIQuestionActivityButton = findViewById<Button>(R.id.ai_question_btn)
+
         // 设置点击事件监听器
         goToSecondActivityButton.setOnClickListener {
             val intent = Intent(this, CustomMotionActivity::class.java)
+            startActivity(intent)
+        }
+
+        goAIQuestionActivityButton.setOnClickListener {
+            val intent = Intent(this, AIQuestionActivity::class.java)
             startActivity(intent)
         }
 
