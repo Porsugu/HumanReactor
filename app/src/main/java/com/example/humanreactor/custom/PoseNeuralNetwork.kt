@@ -38,7 +38,7 @@ class PoseNeuralNetwork {
         weightsHiddenToOutput = Array(outputSize) { DoubleArray(hiddenSize) { (Math.random() * 2 - 1) * 0.1 } }
         biasesOutput = DoubleArray(outputSize) { 0.0 }
     }
-
+//hi
     // 從數據集設置類別
     fun setClasses(dataset: List<Pair<List<List<Double>>, String>>) {
         val uniqueClasses = dataset.map { it.second }.distinct()

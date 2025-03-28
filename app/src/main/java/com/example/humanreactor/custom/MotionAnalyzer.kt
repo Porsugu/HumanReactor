@@ -54,6 +54,7 @@ class MotionAnalyzer(private val listener: (List<Pose>) -> Unit) : ImageAnalysis
         return listOf(Pose(keypoints))
     }
 
+//    hi
     private fun mapLandmarkToKeypoint(landmarkType: Int): KeypointType {
         return when (landmarkType) {
             0 -> KeypointType.NOSE

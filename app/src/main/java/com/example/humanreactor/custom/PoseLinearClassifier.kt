@@ -12,7 +12,7 @@ class PoseLinearClassifier {
     fun modelTrained():Boolean{
         return weights.size > 0
     }
-
+//hi
     // train model
     fun train(dataset: List<Pair<List<List<Double>>, String>>) {
         val allSamples = mutableListOf<Pair<List<Double>, String>>()

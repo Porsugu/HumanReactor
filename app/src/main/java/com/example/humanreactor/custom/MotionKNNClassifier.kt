@@ -32,7 +32,7 @@ class MotionKNNClassifier {
             val distance = calculateDistance(features, sampleFeatures)
             Triple(distance, label, sampleFeatures)
         }
-
+//hi
         // 找出最近的k個樣本
         val nearest = distances.sortedBy { it.first }.take(k)
 

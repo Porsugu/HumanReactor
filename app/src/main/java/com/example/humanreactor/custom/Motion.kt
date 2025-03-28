@@ -19,3 +19,4 @@ data class Motion(
         return shoulderAngle != 0.0 || leftElbowAngle != 0.0 || rightElbowAngle != 0.0
     }
 }
+//hi

@@ -129,7 +129,7 @@ class MotionSVMClassifier {
             samplesList.forEach { features ->
                 allSamples.add(Pair(features, className))
             }
-
+//hi
             // 建立類別索引
             if (!classIndices.containsKey(className)) {
                 val nextIndex = classIndices.size + 1

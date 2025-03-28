@@ -72,7 +72,7 @@ class StaticPoseClassifier {
 
         return Pair(bestMatch, bestSimilarity)
     }
-
+//hi
     // 對一系列樣本進行預測（多數決）
     fun predictPose(samples: List<List<Double>>): String {
         val predictions = samples.map { predict(it) }

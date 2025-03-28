@@ -284,7 +284,7 @@ class CustomMotionActivity : AppCompatActivity() {
 
         return dataset
     }
-
+//hi
     private fun hasRequiredKeypoints(sample: Pose): Boolean {
         val requiredKeypoints = setOf(
             KeypointType.NOSE, KeypointType.LEFT_SHOULDER, KeypointType.RIGHT_SHOULDER,
