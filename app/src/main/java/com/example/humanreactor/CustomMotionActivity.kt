@@ -66,8 +66,8 @@ class CustomMotionActivity : AppCompatActivity() {
     private lateinit var keypointView: KeypointView
 
     //    private val classifier = MotionSVMClassifier()
-    private val classifier = StaticPoseClassifier()
-//    private val classifier = PoseLinearClassifier()
+//    private val classifier = StaticPoseClassifier()
+    private val classifier = PoseLinearClassifier()
 //    private val classifier = PoseNeuralNetwork()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -229,27 +229,25 @@ class CustomMotionActivity : AppCompatActivity() {
             // 全部動作訓練完成
             runOnUiThread {
                 colorIndicatorView.visibility = View.INVISIBLE
+
+                Thread.sleep(500)
                 statusTextView.text = "正在準備數據集..."
                 Log.d("Classifier", "Num classes: ${motions.size}")
                 val dataset = prepareDataset(motions)
-                Thread.sleep(500)
                 statusTextView.text = "正在訓練模型..."
 //                classifier.train(dataset)
-                classifier.loadFromDataset(dataset)
-                classifier.setSimilarityThreshold(0.75)
+//                classifier.loadFromDataset(dataset)
+//                classifier.setSimilarityThreshold(0.75)
 //                classifier.setLearningParameters(0.01, numEpochs = 200)
-
-//                classifier.train(dataset)
-                val inputDimension = dataset[0].first[0].size     // 特徵維度
-                val numClasses = dataset.map { it.second }.distinct().size  // 類別數量
-
-//                classifier.train(dataset)
+                classifier.train(dataset)
                 Log.d("Classifier", "Num classes A4: ${motions.size}")
                 Thread.sleep(500)
                 statusTextView.text = "所有動作訓練完成！"
 
             }
+
         }.start()
+
     }
 
     private fun prepareDataset(motions: List<Motion>): List<Pair<List<List<Double>>, String>> {
@@ -267,6 +265,7 @@ class CustomMotionActivity : AppCompatActivity() {
 
             val allAngles = mutableListOf<List<Double>>() // 存放所有樣本的角度
             for (sample in validSamples) {
+                Log.w("Classifier", "動作 ${motion.name} ")
                 val angles = calculateAngles(sample)
                 allAngles.add(angles)
             }
@@ -312,7 +311,7 @@ class CustomMotionActivity : AppCompatActivity() {
             return listOf() // 数据不完整，跳过
         }
 
-//        return listOf(
+//         val ret = listOf(
 //            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀角度
 //            calculateAngle(leftWrist, leftElbow, leftShoulder), // 左手肘角度
 //            calculateAngle(rightWrist, rightElbow, rightShoulder), // 右手肘角度
@@ -320,26 +319,54 @@ class CustomMotionActivity : AppCompatActivity() {
 //            calculateAngle(rightElbow, rightShoulder, rightHip), // 右上臂角度
 //            calculateAngle(leftShoulder, leftHip, rightHip) // 身體傾斜角度
 //        )
-        return listOf(
-            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀-鼻子-肩膀角度
-            calculateAngle(leftWrist, leftElbow, leftShoulder), // 左手肘角度
-            calculateAngle(rightWrist, rightElbow, rightShoulder), // 右手肘角度
-            calculateAngle(leftElbow, leftShoulder, leftHip), // 左上臂角度
-            calculateAngle(rightElbow, rightShoulder, rightHip), // 右上臂角度
-            calculateAngle(leftShoulder, leftHip, rightHip), // 身體傾斜角度
-            calculateAngle(rightShoulder, rightHip, leftHip), // 身體右側傾斜角度
-            calculateAngle(nose, leftShoulder, leftElbow), // 鼻子-左肩-左肘角度
-            calculateAngle(nose, rightShoulder, rightElbow), // 鼻子-右肩-右肘角度
-            calculateAngle(leftElbow, leftShoulder, rightShoulder), // 左肘-左肩-右肩角度
-            calculateAngle(rightElbow, rightShoulder, leftShoulder), // 右肘-右肩-左肩角度
-            calculateAngle(nose, leftShoulder, leftHip), // 鼻子-左肩-左髖角度
-            calculateAngle(nose, rightShoulder, rightHip), // 鼻子-右肩-右髖角度
-            calculateAngle(leftShoulder, rightShoulder, rightHip), // 左肩-右肩-右髖角度
-            calculateAngle(leftShoulder, rightShoulder, nose), // 左肩-右肩-鼻子角度
-            calculateAngle(leftShoulder, nose, rightShoulder), // 左肩-鼻子-右肩角度
-            calculateAngle(leftHip, leftShoulder, leftElbow), // 左髖-左肩-左肘角度
-            calculateAngle(rightHip, rightShoulder, rightElbow) // 左髖-左肩-左肘角度
+//        return listOf(
+//            calculateAngle(rightShoulder, nose, leftShoulder), // 肩膀-鼻子-肩膀角度
+//            calculateAngle(leftWrist, leftElbow, leftShoulder), // 左手肘角度
+//            calculateAngle(rightWrist, rightElbow, rightShoulder), // 右手肘角度
+//            calculateAngle(leftElbow, leftShoulder, leftHip), // 左上臂角度
+//            calculateAngle(rightElbow, rightShoulder, rightHip), // 右上臂角度
+//            calculateAngle(leftShoulder, leftHip, rightHip), // 身體傾斜角度
+//            calculateAngle(rightShoulder, rightHip, leftHip), // 身體右側傾斜角度
+//            calculateAngle(nose, leftShoulder, leftElbow), // 鼻子-左肩-左肘角度
+//            calculateAngle(nose, rightShoulder, rightElbow), // 鼻子-右肩-右肘角度
+//            calculateAngle(leftElbow, leftShoulder, rightShoulder), // 左肘-左肩-右肩角度
+//            calculateAngle(rightElbow, rightShoulder, leftShoulder), // 右肘-右肩-左肩角度
+//            calculateAngle(nose, leftShoulder, leftHip), // 鼻子-左肩-左髖角度
+//            calculateAngle(nose, rightShoulder, rightHip), // 鼻子-右肩-右髖角度
+//            calculateAngle(leftShoulder, rightShoulder, rightHip), // 左肩-右肩-右髖角度
+//            calculateAngle(leftShoulder, rightShoulder, nose), // 左肩-右肩-鼻子角度
+//            calculateAngle(leftShoulder, nose, rightShoulder), // 左肩-鼻子-右肩角度
+//            calculateAngle(leftHip, leftShoulder, leftElbow), // 左髖-左肩-左肘角度
+//            calculateAngle(rightHip, rightShoulder, rightElbow) // 左髖-左肩-左肘角度
+//        )
+
+        val ret =  listOf(
+//            calculateAngle4p(rightShoulder, leftShoulder, rightElbow, leftElbow),
+//            calculateAngle4p(rightShoulder, leftShoulder, rightWrist, leftWrist),
+//            calculateAngle4p(rightShoulder, leftShoulder, rightHip, leftHip),
+//            calculateAngle4p(rightElbow, leftElbow, rightWrist, leftWrist),
+//            calculateAngle4p(rightElbow, leftElbow, rightHip, leftHip),
+//            calculateAngle4p(rightWrist, leftWrist, rightHip, leftHip),
+            getRelativeXY(nose, rightElbow, rightShoulder, leftShoulder).first,
+            getRelativeXY(nose, rightElbow, rightShoulder, leftShoulder).second,
+            getRelativeXY(nose, leftElbow, rightShoulder, leftShoulder).first,
+            getRelativeXY(nose, leftElbow, rightShoulder, leftShoulder).second,
+            getRelativeXY(nose, rightWrist, rightShoulder, leftShoulder).first,
+            getRelativeXY(nose, rightWrist, rightShoulder, leftShoulder).second,
+            getRelativeXY(nose, leftWrist, rightShoulder, leftShoulder).first,
+            getRelativeXY(nose, leftWrist, rightShoulder, leftShoulder).second,
+            getRelativeXY(nose, rightElbow, rightHip, leftHip).first,
+            getRelativeXY(nose, rightElbow, rightHip, leftHip).second,
+            getRelativeXY(nose, leftElbow, rightHip, leftHip).first,
+            getRelativeXY(nose, leftElbow, rightHip, leftHip).second,
+            getRelativeXY(nose, rightWrist, rightHip, leftHip).first,
+            getRelativeXY(nose, rightWrist, rightHip, leftHip).second,
+            getRelativeXY(nose, leftWrist, rightHip, leftHip).first,
+            getRelativeXY(nose, leftWrist, rightHip, leftHip).second,
+
         )
+        Log.d("Classifier", "${ret}")
+        return ret
     }
 
     private fun calculateAngle(a: Position, b: Position, c: Position): Double {
@@ -351,6 +378,45 @@ class CustomMotionActivity : AppCompatActivity() {
         val magnitudeCB = sqrt((cb.first * cb.first + cb.second * cb.second).toDouble())
 
         return Math.toDegrees(acos(dotProduct / (magnitudeAB * magnitudeCB)))
+    }
+
+
+    private fun calculateAngle4p(v1i: Position, v1f: Position, v2i: Position, v2f: Position): Double {
+        val v1 = Pair(v1i.x - v1f.x, v1i.y - v1f.y)
+        val v2 = Pair(v2i.x - v2f.x, v2i.y - v2f.y)
+
+        val dotProduct = v1.first * v2.first + v1.second * v2.second
+        val magnitudeV1 = sqrt((v1.first * v1.first + v1.second * v1.second).toDouble())
+        val magnitudeV2 = sqrt((v2.first * v2.first + v2.second * v2.second).toDouble())
+
+        return Math.toDegrees(acos(dotProduct / (magnitudeV1 * magnitudeV2)))
+    }
+
+    private fun getRelativeXY(nose: Position, keypoint:Position, refA: Position, refB:Position):Pair<Double,Double>{
+        val defXAB = refA.x-refB.x
+        val defYAB = refA.y-refB.y
+        val refLength = sqrt(defXAB * defXAB + defYAB * defYAB)
+        val retX = (keypoint.x - nose.x) / refLength
+        val retY = (keypoint.y - nose.y) / refLength
+        return Pair(retX.toDouble(), retY.toDouble())
+    }
+
+
+    private fun getIntersection(a: Position, b: Position, c: Position, d: Position): Pair<Float, Float>? {
+        val denominator = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+
+        if (denominator.toDouble() == 0.0) return null // 平行或重合
+
+        val t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denominator
+        val u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denominator
+
+        if (t in 0.0..1.0 && u in 0.0..1.0) {
+            val x = a.x + t * (b.x - a.x)
+            val y = a.y + t * (b.y - a.y)
+            return Pair(x,y)
+        }
+
+        return null
     }
 
     private fun calculateAverageAngles(allAngles: List<List<Double>>): List<Double> {

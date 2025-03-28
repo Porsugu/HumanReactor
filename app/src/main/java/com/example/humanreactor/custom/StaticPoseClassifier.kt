@@ -61,7 +61,7 @@ class StaticPoseClassifier {
         }
 
 
-        if (bestSimilarity < similarityThreshold){
+        if (bestSimilarity < 0.6){
             bestMatch = "unknown"
         }
 
@@ -95,6 +95,7 @@ class StaticPoseClassifier {
         return votes.maxByOrNull { it.value }?.key ?: "未知"
     }
 
+
     // 計算特徵向量間的相似度
     private fun calculateSimilarity(features1: List<Double>, features2: List<Double>): Double {
         if (features1.size != features2.size) return 0.0
@@ -106,7 +107,7 @@ class StaticPoseClassifier {
 
         // 將距離轉換為相似度（0-1範圍，1表示完全匹配）
         // sigma參數控制相似度的容忍度，較大的sigma更寬容
-        val sigma = Math.sqrt(features1.size.toDouble()) * 8
+        val sigma = Math.sqrt(features1.size.toDouble()) * 2
         return Math.exp(-(distance * distance) / (2 * sigma * sigma))
     }
 

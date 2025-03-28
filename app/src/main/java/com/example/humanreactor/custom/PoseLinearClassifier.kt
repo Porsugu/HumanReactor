@@ -7,7 +7,7 @@ class PoseLinearClassifier {
 
     // lr and epochs
     private var learningRate = 0.01
-    private var epochs = 100
+    private var epochs = 1000
 
     fun modelTrained():Boolean{
         return weights.size > 0
