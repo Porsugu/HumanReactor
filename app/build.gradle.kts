@@ -81,4 +81,10 @@ dependencies {
 
     implementation ("tw.edu.ntu.csie:libsvm:3.24")
 
+    //AI API
+    implementation ("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation ("org.json:json:20210307")
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+
 }
