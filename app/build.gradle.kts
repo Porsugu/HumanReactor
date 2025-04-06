@@ -57,10 +57,12 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // CameraX
-    implementation("androidx.camera:camera-core:1.3.0")
-    implementation("androidx.camera:camera-camera2:1.3.0")
-    implementation("androidx.camera:camera-lifecycle:1.3.0")
-    implementation("androidx.camera:camera-view:1.3.0")
+    val cameraxVersion = "1.2.3"  // 固定使用1.2.3版本，這個版本的API更穩定
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
 
     // ML Kit for pose detection
     implementation("com.google.mlkit:pose-detection:18.0.0-beta3")
@@ -73,6 +75,7 @@ dependencies {
     implementation(libs.litert)
     implementation(libs.litert.support.api)
     implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.pose.detection.accurate)
 
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
         // 设置点击事件监听器
         goToSecondActivityButton.setOnClickListener {
-            val intent = Intent(this, CustomMotionActivity::class.java)
+            val intent = Intent(this, PoseDetectionActivity::class.java)
             startActivity(intent)
         }
 
