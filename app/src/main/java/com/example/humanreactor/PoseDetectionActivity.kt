@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PointF
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -12,7 +13,6 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
-import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -23,9 +23,10 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.humanreactor.custom.Motion
+import androidx.core.view.isInvisible
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
+import com.example.humanreactor.customizedMove.NormalizedSample
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
@@ -34,6 +35,14 @@ import com.google.mlkit.vision.pose.PoseLandmark
 import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.math.sqrt
 
 @androidx.camera.core.ExperimentalGetImage
 class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
@@ -51,7 +60,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     // Added: Master switches for displaying red dots and coordinate text
     private var showLandmarkDots = true
-    private var showCoordinatesText = false
+    private var showCoordinatesText = true
 
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var poseDetector: PoseDetector
@@ -64,6 +73,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private val moves = mutableListOf<Move>()
     private lateinit var moveDialogManager: MoveDialogManager
     private lateinit var addMove: Button
+
+    //For Collecting
+    private lateinit var collectALl:Button
+    private lateinit var colorBar: View
+    private lateinit var tips: TextView
+
+    //For training
+    private var isTrained = false
+    private lateinit var trainAll: Button
 
     // Stores the latest detected pose data
     private var currentPose: Pose? = null
@@ -109,6 +127,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
 
+        // For add move
         //for buttons
         addMove = findViewById(R.id.add_move)
 
@@ -118,9 +137,523 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             moveDialogManager.showMoveManagementDialog()
         }
 
+        // For collect all move
+        //for buttons and views
+        collectALl = findViewById(R.id.collectAllMove)
+        colorBar = findViewById(R.id.color_bar)
+        tips = findViewById(R.id.tips)
 
+        //
+        collectALl.setOnClickListener{
+            collectAllMove(5, 1000)
+        }
+
+        // For training model
+        //for buttons
+        trainAll = findViewById(R.id.trainAllMove)
+        trainAll.setOnClickListener {
+            normalizeData()
+        }
     }
 
+    //For collecting
+    private fun collectAllMove(secondsForEachMove: Int, samplesForEachMove: Int) {
+        if(moves.size == 0){
+            CoroutineScope(Dispatchers.Main).launch {
+                tips.isInvisible = false
+                tips.text = "Please add at least 1 move first!!!!"
+                delay(2000)
+                tips.isInvisible = true
+            }
+            return
+        }
+
+        // Disable buttons during the training session
+        collectALl.isEnabled = false
+        addMove.isEnabled = false
+
+        resetAllMoveSamples()
+
+        CoroutineScope(Dispatchers.Main).launch {
+            tips.isInvisible = false  // Make sure tips are visible
+            tips.text = "Start collecting data for your fav move!"
+            delay(2000)
+            tips.text = "Old move data are cleared."
+            delay(2000)
+
+            // Constants for countdown
+            val preparationTime = 3 // seconds to prepare for each move
+
+            // Iterate through each move in the list
+            for (move in moves) {
+                // Preparation countdown
+                tips.text = "Get ready for: ${move.name}"
+                colorBar.setBackgroundColor(move.color)  // Set the color bar to match this move's color
+
+                // Countdown for preparation
+                for (i in preparationTime downTo 1) {
+                    tips.text = "Get ready for: ${move.name}\nStarting in $i seconds..."
+                    delay(1000)
+                }
+
+                tips.text = "START ${move.name} NOW!"
+                delay(500)
+
+                // Calculate timing parameters
+                val totalDurationMillis = secondsForEachMove * 1000
+                val sampleIntervalMillis = totalDurationMillis / samplesForEachMove
+
+                // Start time for the entire collection period
+                val startTime = System.currentTimeMillis()
+                val endTime = startTime + totalDurationMillis
+
+                // Collect samples
+                var samplesCollected = 0
+
+                while (samplesCollected < samplesForEachMove) {
+                    // Calculate remaining time
+                    val currentTime = System.currentTimeMillis()
+                    val remainingMillis = Math.max(0, endTime - currentTime)
+                    val remainingSeconds = (remainingMillis / 1000).toInt()
+
+                    // Try to get the current pose
+                    getCurrentPoseData()?.let { pose ->
+                        move.samples.add(pose)
+                        samplesCollected++
+
+                        // Update progress in UI
+                        val progress = (samplesCollected * 100) / samplesForEachMove
+//                        tips.text = "Hold ${move.name} for ${remainingSeconds}s more\n" +
+//                                "Samples: $samplesCollected/$samplesForEachMove ($progress%)"
+
+                        tips.text = "Collecting: $samplesCollected/$samplesForEachMove\n ($progress%)"
+
+                        // Wait for the next sample interval
+                        if (samplesCollected < samplesForEachMove) {
+                            delay(sampleIntervalMillis.toLong())
+                        }
+                    } ?: run {
+                        // No pose data available, wait a bit and try again
+                        tips.text = "Hold ${move.name} for ${remainingSeconds}s more\n" +
+                                "Waiting for pose data..."
+                        delay(100)
+
+                        // Check if we've run out of time
+                        if (System.currentTimeMillis() > endTime) {
+                            tips.text = "Time's up! Continuing to collect remaining samples..."
+                        }
+                    }
+                }
+
+                // Mark this move as trained
+                move.isCollected = true
+
+                // Short delay before moving to next move
+                tips.text = "Great! ${move.name} has been recorded with $samplesForEachMove samples!"
+                delay(1500)
+            }
+
+            // Training session completed - CLEAR the color bar
+            colorBar.setBackgroundColor(Color.TRANSPARENT)  // Clear the color
+            tips.text = "All moves data have been colleced successfully!"
+
+//            // Show sample counts for each move
+//            for (move in moves){
+//                tips.text = "Samples of ${move.name}: ${move.samples.size}"
+//                delay(1500)
+//            }
+
+            delay(1500)
+            tips.isInvisible = true
+
+            // Re-enable buttons
+            collectALl.isEnabled = true
+            addMove.isEnabled = true
+        }
+        isTrained = false
+    }
+
+    private fun resetAllMoveSamples(): Int {
+        var movesCleared = 0
+
+        for (move in moves) {
+            if (move.samples.isNotEmpty()) {
+                move.samples.clear()
+                move.isTrained = false  // Reset the trained status
+                movesCleared++
+            }
+            if (move.normalizedSamples.isNotEmpty()) {
+                move.normalizedSamples.clear()
+                move.isTrained = false  // Reset the trained status
+                movesCleared++
+            }
+            move.isCollected = false
+        }
+
+        return movesCleared
+    }
+
+    //For training
+    private fun normalizeData() {
+        CoroutineScope(Dispatchers.Main).launch {
+            // 開始處理前清除 UI
+            tips.isInvisible = false
+            tips.text = "Preparing normalization factors..."
+
+            // 在計算密集型任務時切換到IO線程
+            val bestRelativePoint = withContext(Dispatchers.Default) {
+                findMostStableKeypoint()
+            }
+
+            val bestNormFactor = withContext(Dispatchers.Default) {
+                findMostStableNormalizationFactor()
+            }
+
+            tips.text = "Normalization factors calculated. Processing moves..."
+            delay(1000)
+
+            // 標準化計數
+            var successfulNormalizations = 0
+            var totalSamples = 0
+
+            // 處理每個動作
+            for (move in moves) {
+                // 清除之前的標準化結果
+                move.normalizedSamples.clear()
+
+                // 顯示當前正在處理的動作
+                tips.text = "Processing ${move.name}..."
+
+                // 在後台處理標準化
+                val normalizedResults = withContext(Dispatchers.Default) {
+                    val results = mutableListOf<NormalizedSample>()
+
+                    // 處理每個樣本
+                    for (pose in move.samples) {
+                        totalSamples++
+
+                        // 將關鍵點標準化
+                        val normalizedFeatures = normalizePose(pose, bestRelativePoint, bestNormFactor)
+
+                        // 如果標準化成功，加入到結果中
+                        if (normalizedFeatures != null) {
+                            results.add(NormalizedSample(normalizedFeatures, move.name))
+                            successfulNormalizations++
+                        }
+                    }
+
+                    results
+                }
+
+                // 將結果添加到move中
+                move.normalizedSamples.addAll(normalizedResults)
+
+                // 更新處理進度
+                tips.text = "Processed ${move.name}: ${move.normalizedSamples.size}/${move.samples.size} samples normalized"
+                delay(1000)
+            }
+
+            // 顯示最終結果
+            val successRate = if (totalSamples > 0) (successfulNormalizations * 100 / totalSamples) else 0
+            tips.text = "Normalization complete! $successfulNormalizations/$totalSamples samples normalized ($successRate%)"
+            delay(2000)
+
+            // 顯示成功標準化的樣本數量
+            for (move in moves) {
+                val samplesCount = move.normalizedSamples.size
+                val originalCount = move.samples.size
+                tips.text = "${move.name}: $samplesCount/$originalCount samples normalized"
+                delay(1000)
+            }
+
+            tips.text = "All moves normalized successfully!"
+
+            // 3秒後隱藏提示
+            delay(3000)
+            tips.isInvisible = true
+        }
+    }
+
+    /**
+     * Normalize a pose using the given reference point and normalization factor
+     * @param pose The pose to normalize
+     * @param referencePointType The reference point type for normalization
+     * @param normFactor The normalization factor to use
+     * @return List of normalized features, or null if normalization failed
+     */
+    private fun normalizePose(pose: Pose, referencePointType: Int, normFactor: Float): List<Float>? {
+        // Define the keypoints to normalize
+        val keypointTypes = listOf(
+            PoseLandmark.NOSE,
+            PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
+            PoseLandmark.LEFT_ELBOW, PoseLandmark.RIGHT_ELBOW,
+            PoseLandmark.LEFT_WRIST, PoseLandmark.RIGHT_WRIST,
+            PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
+        )
+
+        // Get the reference point
+        val referencePoint = pose.getPoseLandmark(referencePointType)?.position
+        if (referencePoint == null || normFactor <= 0) {
+            return null // Cannot normalize without reference point or valid normalization factor
+        }
+
+        // Create the normalized features list
+        val normalizedFeatures = mutableListOf<Float>()
+
+        // Normalize each keypoint relative to the reference point
+        for (keypointType in keypointTypes) {
+            val keypoint = pose.getPoseLandmark(keypointType)
+
+            if (keypoint != null) {
+                // Calculate normalized coordinates
+                val normalizedX = (keypoint.position.x - referencePoint.x) / normFactor
+                val normalizedY = (keypoint.position.y - referencePoint.y) / normFactor
+
+                // Add to feature list
+                normalizedFeatures.add(normalizedX)
+                normalizedFeatures.add(normalizedY)
+            } else {
+                // If keypoint is missing, add zeros
+                normalizedFeatures.add(0f)
+                normalizedFeatures.add(0f)
+            }
+        }
+
+        return normalizedFeatures
+    }
+
+    /**
+     * Find the most stable keypoint across all moves
+     * @param moves The list of moves to analyze
+     * @return The most stable keypoint type (PoseLandmark.XXX)
+     */
+    fun findMostStableKeypoint(): Int {
+        // Keypoint types to analyze
+        val keypointTypes = listOf(
+            PoseLandmark.NOSE,
+            PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
+            PoseLandmark.LEFT_ELBOW, PoseLandmark.RIGHT_ELBOW,
+            PoseLandmark.LEFT_WRIST, PoseLandmark.RIGHT_WRIST,
+            PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
+        )
+
+        // Total CV for each keypoint across all moves
+        val totalKeypointCVs = mutableMapOf<Int, Float>()
+        keypointTypes.forEach { totalKeypointCVs[it] = 0f }
+
+        // Calculate CV for each keypoint in each move
+        for (move in moves) {
+
+            // Calculate CVs for this move
+            val moveKeypointCVs = calculateKeypointCVsForMove(move, keypointTypes)
+
+            // Add to total CVs
+            for ((keypointType, cv) in moveKeypointCVs) {
+                totalKeypointCVs[keypointType] =
+                    totalKeypointCVs[keypointType]!! + cv
+            }
+        }
+
+        // Find the keypoint with minimum total CV
+        val mostStable = totalKeypointCVs.minByOrNull { it.value }?.key
+
+        // Default to nose if no keypoint is found
+        return mostStable ?: PoseLandmark.NOSE
+    }
+
+    /**
+     * Calculate the CV of each keypoint for a single move
+     */
+    private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
+        val keypointCVs = mutableMapOf<Int, Float>()
+
+        // For each keypoint, calculate CV
+        for (keypointType in keypointTypes) {
+            val xCoordinates = mutableListOf<Float>()
+            val yCoordinates = mutableListOf<Float>()
+
+            // Collect all instances of this keypoint
+            for (pose in move.samples) {
+                pose.getPoseLandmark(keypointType)?.let {
+                    xCoordinates.add(it.position.x)
+                    yCoordinates.add(it.position.y)
+                }
+            }
+
+            // If keypoint is missing in any sample, assign maximum CV
+            if (xCoordinates.size < move.samples.size) {
+                keypointCVs[keypointType] = Float.MAX_VALUE
+                continue
+            }
+
+            // Calculate CV for x and y coordinates
+            val xCV = calculateCV(xCoordinates)
+            val yCV = calculateCV(yCoordinates)
+
+            // Use the average of x and y CVs
+            keypointCVs[keypointType] = (xCV + yCV) / 2
+        }
+
+        return keypointCVs
+    }
+
+    /**
+     * Find the most stable normalization factor value across all pose samples
+     * @param moves The list of moves to analyze
+     * @return The most stable normalization factor value
+     */
+    fun findMostStableNormalizationFactor(): Float {
+        // Collect measurements for different normalization methods
+        val shoulderWidths = mutableListOf<Float>()
+        val hipWidths = mutableListOf<Float>()
+        val rightShoulderToHipDists = mutableListOf<Float>()
+        val leftShoulderToHipDists = mutableListOf<Float>()
+        val bboxDiagonals = mutableListOf<Float>()
+
+        // Analyze all samples
+        for (move in moves) {
+            for (pose in move.samples) {
+                // Shoulder width
+                calculateDistance(pose,PoseLandmark.RIGHT_SHOULDER, PoseLandmark.LEFT_SHOULDER)?.let { shoulderWidths.add(it) }
+
+                // Hip width
+                calculateDistance(pose,PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP)?.let { hipWidths.add(it) }
+
+                // Right shoulder to Right hip distance
+                calculateDistance(pose,PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP)?.let { rightShoulderToHipDists.add(it) }
+
+                // Left shoulder to hip distance
+                calculateDistance(pose,PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP)?.let { leftShoulderToHipDists.add(it) }
+
+                // Bounding box diagonal
+                calculateBboxDiagonal(pose)?.let { bboxDiagonals.add(it) }
+            }
+        }
+
+        // Calculate coefficient of variation (CV) for each method
+        // Lower CV indicates more stable measurements
+        val shoulderWidthCV = calculateCV(shoulderWidths)
+        val hipWidthCV = calculateCV(hipWidths)
+        val rightShoulderToHipCV = calculateCV(rightShoulderToHipDists)
+        val leftShoulderToHipCV = calculateCV(leftShoulderToHipDists)
+        val bboxDiagonalCV = calculateCV(bboxDiagonals)
+
+        // Log results for analysis
+        Log.d("Normalization", "Coefficient of Variation Analysis:")
+        Log.d("Normalization", "- Shoulder Width: $shoulderWidthCV (${shoulderWidths.size} samples)")
+        Log.d("Normalization", "- Hip Width: $hipWidthCV (${hipWidths.size} samples)")
+        Log.d("Normalization", "- Right Shoulder to Hip: $rightShoulderToHipCV (${rightShoulderToHipDists.size} samples)")
+        Log.d("Normalization", "- Left Shoulder to Hip: $leftShoulderToHipCV (${leftShoulderToHipDists.size} samples)")
+        Log.d("Normalization", "- Bounding Box Diagonal: $bboxDiagonalCV (${bboxDiagonals.size} samples)")
+
+        // Consider only methods with sufficient sample coverage (90%)
+        val totalSamples = moves.sumOf { it.samples.size }
+        val threshold = 0
+
+        // Calculate the average value for each method with sufficient samples
+        var bestCV = Float.MAX_VALUE
+        var bestFactorAverage = 0f
+
+        if (shoulderWidthCV < bestCV) {
+            bestCV = shoulderWidthCV
+            bestFactorAverage = shoulderWidths.average().toFloat()
+        }
+
+        if (hipWidthCV < bestCV) {
+            bestCV = hipWidthCV
+            bestFactorAverage = hipWidths.average().toFloat()
+        }
+
+        if (rightShoulderToHipCV < bestCV) {
+            bestCV = rightShoulderToHipCV
+            bestFactorAverage = rightShoulderToHipDists.average().toFloat()
+        }
+
+        if (leftShoulderToHipCV < bestCV) {
+            bestCV = leftShoulderToHipCV
+            bestFactorAverage = leftShoulderToHipDists.average().toFloat()
+        }
+
+        // Bounding box is always available as a fallback
+        if (bboxDiagonalCV < bestCV || bestFactorAverage == 0f) {
+            bestCV = bboxDiagonalCV
+            bestFactorAverage = bboxDiagonals.average().toFloat()
+        }
+
+        Log.d("Normalization", "Selected best normalization factor: $bestFactorAverage (CV: $bestCV)")
+
+        return bestFactorAverage
+    }
+
+    /**
+     * Calculate distance between two landmarks in a pose
+     * @param pose The pose to analyze
+     * @param firstLandmarkType First landmark type
+     * @param secondLandmarkType Second landmark type
+     * @return Distance between the landmarks, or null if either landmark is missing
+     */
+    private fun calculateDistance(pose: Pose, firstLandmarkType: Int, secondLandmarkType: Int): Float? {
+        val firstLandmark = pose.getPoseLandmark(firstLandmarkType)
+        val secondLandmark = pose.getPoseLandmark(secondLandmarkType)
+
+        if (firstLandmark != null && secondLandmark != null) {
+            val dx = secondLandmark.position.x - firstLandmark.position.x
+            val dy = secondLandmark.position.y - firstLandmark.position.y
+            return sqrt(dx * dx + dy * dy)
+        }
+
+        return null
+    }
+
+    /**
+     * Calculate the bounding box diagonal for the upper body landmarks
+     */
+    private fun calculateBboxDiagonal(pose: Pose): Float? {
+        // List of upper body landmarks to consider
+        val landmarkTypes = listOf(
+            PoseLandmark.NOSE,
+            PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
+            PoseLandmark.LEFT_ELBOW, PoseLandmark.RIGHT_ELBOW,
+            PoseLandmark.LEFT_WRIST, PoseLandmark.RIGHT_WRIST,
+            PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
+        )
+
+        // Get all available landmarks
+        val landmarks = landmarkTypes.mapNotNull { pose.getPoseLandmark(it) }
+
+        // If we don't have enough landmarks, return null
+        if (landmarks.size < 3) return null
+
+        // Find the minimum and maximum x and y coordinates
+        var minX = Float.MAX_VALUE
+        var minY = Float.MAX_VALUE
+        var maxX = Float.MIN_VALUE
+        var maxY = Float.MIN_VALUE
+
+        for (landmark in landmarks) {
+            minX = minOf(minX, landmark.position.x)
+            minY = minOf(minY, landmark.position.y)
+            maxX = maxOf(maxX, landmark.position.x)
+            maxY = maxOf(maxY, landmark.position.y)
+        }
+
+        // Calculate the diagonal length of the bounding box
+        val width = maxX - minX
+        val height = maxY - minY
+        return sqrt(width * width + height * height)
+    }
+
+    private fun calculateCV(values: List<Float>): Float {
+        if (values.isEmpty() || values.size < 3) return Float.MAX_VALUE
+
+        val mean = values.average().toFloat()
+        if (mean == 0f) return Float.MAX_VALUE
+
+        val variance = values.map { (it - mean) * (it - mean) }.average().toFloat()
+        val stdDev = sqrt(variance)
+
+        return stdDev / mean
+    }
     // Interface: Get current detected pose data
     fun getCurrentPoseData(): Pose? {
         return currentPose
