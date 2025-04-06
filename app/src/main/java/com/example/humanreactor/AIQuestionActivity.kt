@@ -28,7 +28,7 @@ class AIQuestionActivity : AppCompatActivity() {
 
         questionTextView = findViewById(R.id.fast_reaction_question_display)
         modelCall()
-//        fetchQuestion()
+//        fetchQuestion()sss
     }
 
     public fun modelCall(){
