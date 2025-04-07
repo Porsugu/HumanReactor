@@ -23,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.081" />
 
-    <!-- Option A -->
+    <!-- Timer Shown -->
     <TextView
         android:id="@+id/fast_reaction_timer_display"
         android:layout_width="wrap_content"
@@ -40,156 +40,15 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.315" />
 
-    <!-- Option B -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/option_a_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/mc_box_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp"
+    <Button
+        android:layout_width="140dp"
+        android:layout_height="159dp"
+        android:layout_marginBottom="208dp"
+        android:text="PRESS to SPEAK"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/fast_reaction_timer_display">
+        app:layout_constraintHorizontal_bias="0.461"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <RadioButton
-            android:id="@+id/radio_option_a"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:duplicateParentState="true"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/text_option_a"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:duplicateParentState="true"
-            android:text="Option A"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/radio_option_a"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/option_b_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/mc_box_background"
-        android:padding="16dp"
-        android:layout_marginTop="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/option_a_container"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <RadioButton
-            android:id="@+id/radio_option_b"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <TextView
-            android:id="@+id/text_option_b"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Option B"
-            android:textSize="16sp"
-            android:layout_marginStart="8dp"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toEndOf="@id/radio_option_b"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- Option C -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/option_c_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/mc_box_background"
-        android:padding="16dp"
-        android:layout_marginTop="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/option_b_container"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <RadioButton
-            android:id="@+id/radio_option_c"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <TextView
-            android:id="@+id/text_option_c"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Option C"
-            android:textSize="16sp"
-            android:layout_marginStart="8dp"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toEndOf="@id/radio_option_c"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- Option D -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/option_d_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/mc_box_background"
-        android:padding="16dp"
-        android:layout_marginTop="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/option_c_container"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <RadioButton
-            android:id="@+id/radio_option_d"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <TextView
-            android:id="@+id/text_option_d"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Option D"
-            android:textSize="16sp"
-            android:layout_marginStart="8dp"
-            android:duplicateParentState="true"
-            app:layout_constraintStart_toEndOf="@id/radio_option_d"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
