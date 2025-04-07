@@ -34,7 +34,7 @@ class AIQuestionActivity : AppCompatActivity() {
     public fun modelCall(){
         val generativeModel = GenerativeModel(
             modelName = "gemini-1.5-pro-latest",
-            apiKey = "AIzaSyBB-qR26rDkBT96zzDNR0PZEMlOfHKB4Rc"
+            apiKey = ""
 
 
         )
