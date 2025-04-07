@@ -4,15 +4,13 @@ import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -21,9 +19,11 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
+import com.example.humanreactor.AI_Model.RuleBasedClassifier
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
 import com.example.humanreactor.customizedMove.NormalizedSample
@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.sqrt
 
 @androidx.camera.core.ExperimentalGetImage
@@ -59,8 +60,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private var showRightHip = true
 
     // Added: Master switches for displaying red dots and coordinate text
-    private var showLandmarkDots = true
-    private var showCoordinatesText = true
+    private var showLandmarkDots = false
+    private var showCoordinatesText = false
 
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var poseDetector: PoseDetector
@@ -68,20 +69,36 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var previewView: androidx.camera.view.PreviewView
     private lateinit var textViewStatus: TextView
 
-    //For save user's move
+    //For unite btn
+    private lateinit var leftBTN: ImageView
+    private lateinit var rightBTN: ImageView
+    private lateinit var allBTN: ConstraintLayout
+    private lateinit var allBTN_Icon: ImageView
+    private lateinit var allBTN_Text: TextView
+    private var START_PAGE: Int = 0
+    private var current_page:Int = 0
+    private var END_PAGE: Int = 4
+
+    //For add user move
     private val usedColors = mutableSetOf<Int>()
     private val moves = mutableListOf<Move>()
     private lateinit var moveDialogManager: MoveDialogManager
-    private lateinit var addMove: Button
+//    private lateinit var addMove_BTN: Button
 
     //For Collecting
-    private lateinit var collectALl:Button
+//    private lateinit var collectALl_BTN:Button
     private lateinit var colorBar: View
     private lateinit var tips: TextView
+    private var ref:Int = 0
+    private var fac:Float = 0f
 
     //For training
     private var isTrained = false
-    private lateinit var trainAll: Button
+//    private lateinit var trainAll_BTN: Button
+    private lateinit var classifier: RuleBasedClassifier
+
+    //For reaction test
+//    private lateinit var reaction_BTN:Button
 
     // Stores the latest detected pose data
     private var currentPose: Pose? = null
@@ -95,7 +112,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pose_detection)
+        setContentView(R.layout.activity_pose_detection2)
 
         // Initialize views
         surfaceView = findViewById(R.id.surface_view)
@@ -129,35 +146,116 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         // For add move
         //for buttons
-        addMove = findViewById(R.id.add_move)
+//        addMove_BTN = findViewById(R.id.add_move)
 
         //for add moves
         moveDialogManager = MoveDialogManager(this, moves, usedColors)
-        addMove.setOnClickListener {
-            moveDialogManager.showMoveManagementDialog()
-        }
+//        addMove_BTN.setOnClickListener {
+//            moveDialogManager.showMoveManagementDialog()
+//        }
 
         // For collect all move
         //for buttons and views
-        collectALl = findViewById(R.id.collectAllMove)
+//        collectALl_BTN = findViewById(R.id.collectAllMove)
         colorBar = findViewById(R.id.color_bar)
         tips = findViewById(R.id.tips)
+        tips.isInvisible = true
 
-        //
-        collectALl.setOnClickListener{
-            collectAllMove(5, 1000)
-        }
+//        collectALl_BTN.setOnClickListener{
+//            collectAllMoveSample(5, 1000)
+//        }
 
         // For training model
         //for buttons
-        trainAll = findViewById(R.id.trainAllMove)
-        trainAll.setOnClickListener {
-            normalizeData()
+//        trainAll_BTN = findViewById(R.id.trainAllMove)
+//        trainAll_BTN.setOnClickListener {
+//            processAndTrainModel()
+//        }
+
+        //For reaction
+//        reaction_BTN = findViewById(R.id.reaction)
+//        reaction_BTN.setOnClickListener {
+//            testReaction(10)
+//        }
+
+
+        //For unite btn
+        allBTN_Icon = findViewById(R.id.allBTN_icon)
+        allBTN_Text = findViewById(R.id.allBTN_text)
+        leftBTN = findViewById(R.id.leftBTN)
+        leftBTN.isInvisible = true
+        leftBTN.isEnabled = true
+        leftBTN.setOnClickListener {
+            current_page --
+            if (current_page  == START_PAGE){
+                disappearBTN(leftBTN)
+            }
+            if(current_page < END_PAGE - 1){
+                showBTN(rightBTN)
+            }
+            setAllBTN(current_page)
+        }
+        rightBTN = findViewById(R.id.rightBTN)
+        rightBTN.setOnClickListener {
+            current_page ++
+            if (current_page  == END_PAGE - 1){
+                disappearBTN(rightBTN)
+            }
+            if(current_page > START_PAGE){
+                showBTN(leftBTN)
+            }
+            setAllBTN(current_page)
+        }
+        allBTN = findViewById(R.id.allBTN)
+        allBTN.setOnClickListener {
+            if(current_page == 0){
+                moveDialogManager.showMoveManagementDialog()
+            }
+            else if(current_page == 1){
+                collectAllMoveSample(5, 1000)
+            }
+            else if(current_page == 2){
+                processAndTrainModel()
+            }
+            else if(current_page == 3){
+                testReaction(10)
+            }
         }
     }
 
+    //for unite btn
+    fun disappearBTN(btn:ImageView){
+        btn.isInvisible = true
+        btn.isEnabled = false
+    }
+
+    fun showBTN(btn:ImageView){
+        btn.isInvisible = false
+        btn.isEnabled = true
+    }
+
+    fun setAllBTN(current_page:Int){
+        val icons = listOf(
+            android.R.drawable.ic_menu_add,
+            android.R.drawable.ic_menu_camera,
+            android.R.drawable.ic_menu_edit,
+            android.R.drawable.ic_menu_compass,
+        )
+
+        val texts = listOf(
+            "Add Moves",
+            "Sampling",
+            "Train AI",
+            "Reaction!!"
+        )
+        allBTN_Icon.setImageResource(icons[current_page])
+        allBTN_Text.text = texts[current_page]
+
+    }
+
     //For collecting
-    private fun collectAllMove(secondsForEachMove: Int, samplesForEachMove: Int) {
+    private fun collectAllMoveSample(secondsForEachMove: Int, samplesForEachMove: Int) {
+
         if(moves.size == 0){
             CoroutineScope(Dispatchers.Main).launch {
                 tips.isInvisible = false
@@ -169,12 +267,14 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         // Disable buttons during the training session
-        collectALl.isEnabled = false
-        addMove.isEnabled = false
+//        collectALl_BTN.isEnabled = false
+//        addMove_BTN.isEnabled = false
 
         resetAllMoveSamples()
 
         CoroutineScope(Dispatchers.Main).launch {
+            isTrained = false
+            disableAllBtn()
             tips.isInvisible = false  // Make sure tips are visible
             tips.text = "Start collecting data for your fav move!"
             delay(2000)
@@ -257,20 +357,14 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             colorBar.setBackgroundColor(Color.TRANSPARENT)  // Clear the color
             tips.text = "All moves data have been colleced successfully!"
 
-//            // Show sample counts for each move
-//            for (move in moves){
-//                tips.text = "Samples of ${move.name}: ${move.samples.size}"
-//                delay(1500)
-//            }
-
             delay(1500)
             tips.isInvisible = true
 
-            // Re-enable buttons
-            collectALl.isEnabled = true
-            addMove.isEnabled = true
+
+            enableAllBtn()
         }
-        isTrained = false
+
+
     }
 
     private fun resetAllMoveSamples(): Int {
@@ -294,84 +388,89 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     //For training
-    private fun normalizeData() {
+    private fun processAndTrainModel() {
         CoroutineScope(Dispatchers.Main).launch {
-            // 開始處理前清除 UI
-            tips.isInvisible = false
-            tips.text = "Preparing normalization factors..."
-
-            // 在計算密集型任務時切換到IO線程
-            val bestRelativePoint = withContext(Dispatchers.Default) {
-                findMostStableKeypoint()
+            disableAllBtn()
+            try {
+                normalizeData()
+                trainModel()
+            } catch (e: Exception) {
+                Log.e("ProcessAndTrain", "Error during processing or training", e)
+                tips.text = "Error: ${e.message}"
+                delay(3000)
+                tips.isInvisible = true
             }
+            enableAllBtn()
+            isTrained = true
+        }
 
-            val bestNormFactor = withContext(Dispatchers.Default) {
-                findMostStableNormalizationFactor()
-            }
+    }
 
-            tips.text = "Normalization factors calculated. Processing moves..."
-            delay(1000)
+    private suspend fun normalizeData() {
+        tips.isInvisible = false
+        tips.text = "Preparing normalization factors..."
 
-            // 標準化計數
-            var successfulNormalizations = 0
-            var totalSamples = 0
+        // switch to IO
+        val bestRelativePoint = withContext(Dispatchers.Default) {
+            findMostStableKeypoint()
 
-            // 處理每個動作
-            for (move in moves) {
-                // 清除之前的標準化結果
-                move.normalizedSamples.clear()
+        }
+        ref = bestRelativePoint
+        val bestNormFactor = withContext(Dispatchers.Default) {
+            findMostStableNormalizationFactor()
+        }
+        fac = bestNormFactor
+        tips.text = "Normalization factors calculated. Processing moves..."
+        delay(1000)
 
-                // 顯示當前正在處理的動作
-                tips.text = "Processing ${move.name}..."
+        var successfulNormalizations = 0
+        var totalSamples = 0
 
-                // 在後台處理標準化
-                val normalizedResults = withContext(Dispatchers.Default) {
-                    val results = mutableListOf<NormalizedSample>()
+        // process each move
+        for (move in moves) {
+            tips.text = "Clear ${move.name} previous normalized samples..."
+            move.normalizedSamples.clear()
+            delay(500)
+            // 顯示當前正在處理的動作
+            tips.text = "Processing ${move.name}..."
 
-                    // 處理每個樣本
-                    for (pose in move.samples) {
-                        totalSamples++
+            val normalizedResults = withContext(Dispatchers.Default) {
+                val results = mutableListOf<NormalizedSample>()
 
-                        // 將關鍵點標準化
-                        val normalizedFeatures = normalizePose(pose, bestRelativePoint, bestNormFactor)
+                for (pose in move.samples) {
+                    totalSamples++
 
-                        // 如果標準化成功，加入到結果中
-                        if (normalizedFeatures != null) {
-                            results.add(NormalizedSample(normalizedFeatures, move.name))
-                            successfulNormalizations++
-                        }
+                    val normalizedFeatures = normalizePose(pose, bestRelativePoint, bestNormFactor)
+
+                    if (normalizedFeatures != null) {
+                        results.add(NormalizedSample(normalizedFeatures, move.name))
+                        successfulNormalizations++
                     }
-
-                    results
                 }
 
-                // 將結果添加到move中
-                move.normalizedSamples.addAll(normalizedResults)
-
-                // 更新處理進度
-                tips.text = "Processed ${move.name}: ${move.normalizedSamples.size}/${move.samples.size} samples normalized"
-                delay(1000)
+                results
             }
 
-            // 顯示最終結果
-            val successRate = if (totalSamples > 0) (successfulNormalizations * 100 / totalSamples) else 0
-            tips.text = "Normalization complete! $successfulNormalizations/$totalSamples samples normalized ($successRate%)"
-            delay(2000)
+            move.normalizedSamples.addAll(normalizedResults)
 
-            // 顯示成功標準化的樣本數量
-            for (move in moves) {
-                val samplesCount = move.normalizedSamples.size
-                val originalCount = move.samples.size
-                tips.text = "${move.name}: $samplesCount/$originalCount samples normalized"
-                delay(1000)
-            }
-
-            tips.text = "All moves normalized successfully!"
-
-            // 3秒後隱藏提示
-            delay(3000)
-            tips.isInvisible = true
+            tips.text = "Processed ${move.name}: ${move.normalizedSamples.size}/${move.samples.size} samples normalized"
+            delay(1000)
         }
+
+        // final result
+        val successRate = if (totalSamples > 0) (successfulNormalizations * 100 / totalSamples) else 0
+        tips.text = "Normalization complete! $successfulNormalizations/$totalSamples samples normalized ($successRate%)"
+        delay(2000)
+
+//        for (move in moves) {
+//            val samplesCount = move.normalizedSamples.size
+//            val originalCount = move.samples.size
+//            tips.text = "${move.name}: $samplesCount/$originalCount samples normalized"
+//            delay(1000)
+//        }
+
+        tips.text = "All moves normalized successfully!"
+        delay(1000)
     }
 
     /**
@@ -657,6 +756,281 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     // Interface: Get current detected pose data
     fun getCurrentPoseData(): Pose? {
         return currentPose
+    }
+
+    /**
+     * Train model function for Activity
+     */
+    private fun trainModel() {
+        CoroutineScope(Dispatchers.Main).launch {
+            disableAllBtn()
+            tips.isInvisible = false
+            tips.text = "Preparing to train classifier..."
+            try {
+
+                val totalSamples = moves.sumOf { it.normalizedSamples.size }
+                if (totalSamples == 0) {
+                    tips.text = "Cannot train classifier: No normalized samples available"
+                    delay(3000)
+                    tips.isInvisible = true
+                    return@launch
+                }
+
+                tips.text = "Training classifier with $totalSamples samples..."
+
+
+                val allSamples = withContext(Dispatchers.Default) {
+                    moves.flatMap { it.normalizedSamples }
+                }
+
+
+                classifier = RuleBasedClassifier()
+                val success = withContext(Dispatchers.Default) {
+                    classifier.train(allSamples)
+                }
+
+
+                if (success) {
+                    val trainedMoves = classifier.getTrainedMoves().joinToString(", ")
+                    tips.text = "Classifier trained successfully!\n" +
+                            "Trained moves: $trainedMoves\n" +
+                            "Total samples: $totalSamples"
+                } else {
+                    tips.text = "Classifier training failed. Please try again."
+                }
+
+
+                delay(3000)
+                tips.isInvisible = true
+            } catch (e: Exception) {
+                Log.e("ModelTraining", "Error during classifier training", e)
+                tips.text = "Training error: ${e.message}"
+                delay(3000)
+                tips.isInvisible = true
+            }
+            enableAllBtn()
+        }
+
+    }
+
+    /**
+     * Test user reaction time and accuracy
+     */
+    private fun testReaction(numTest: Int) {
+        if (!::classifier.isInitialized || !classifier.isTrained()) {
+            Toast.makeText(this, "Please train the classifier first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Define constants
+        val UNKNOWN_ACTION = "unknown"
+        val CONFIDENCE_THRESHOLD = 0.98f  // 98% confidence threshold
+
+        CoroutineScope(Dispatchers.Main).launch {
+            disableAllBtn()
+            try {
+                tips.isInvisible = false
+                tips.text = "Get ready for reaction test!\nThe color bar will change colors.\nMake the corresponding move as quickly as possible."
+                colorBar.setBackgroundColor(Color.GRAY)
+                delay(5000)
+
+                // Prepare test data
+                val moveOptions = moves.filter { it.normalizedSamples.size > 0 }
+                if (moveOptions.isEmpty()) {
+                    tips.text = "No trained moves available for testing"
+                    delay(3000)
+                    tips.isInvisible = true
+                    return@launch
+                }
+
+                // Randomly select test moves
+                val testMoves = List(numTest) { moveOptions.random() }
+
+                // Statistics variables
+                val reactionTimes = mutableListOf<Long>()
+                var correctCount = 0
+
+                // Prediction window settings
+                val WINDOW_SIZE = 3
+                val REQUIRED_CONSENSUS = 2
+
+                // Find best reference point and normalization factor
+//            val bestReferencePoint = findMostStableKeypoint(moves)
+//            val bestNormFactor = findMostStableNormalizationFactor(moves)
+
+                val bestReferencePoint = ref
+                val bestNormFactor = fac
+
+                // Run tests
+                for (i in 0 until numTest) {
+                    // Select current test move
+                    val currentMove = testMoves[i]
+
+                    // Countdown
+                    for (count in 3 downTo 1) {
+                        tips.text = "Next test in $count..."
+                        delay(1000)
+                    }
+
+                    // Show prompt
+                    tips.text = "DO ${currentMove.name} NOW!"
+                    colorBar.setBackgroundColor(currentMove.color)
+
+                    // Record start time
+                    val startTime = System.currentTimeMillis()
+
+                    // Detection variables
+                    var detected = false
+                    var detectedMove = ""
+                    var confidence = 0f
+                    var endTime: Long = 0
+
+                    // Real-time display variables
+                    var lastUpdateTime = 0L
+                    val UPDATE_INTERVAL = 200L // Real-time update interval (milliseconds)
+
+                    // Display variables
+                    var currentPrediction = UNKNOWN_ACTION
+                    var currentConfidence = 0f
+
+                    // Prediction window
+                    val predictionWindow = mutableListOf<Pair<String, Float>>()
+
+                    // Detection loop with timeout
+                    withTimeoutOrNull(10000) { // 10 seconds timeout
+                        while (!detected) {
+                            val currentTime = System.currentTimeMillis()
+
+                            // Get current pose
+                            val currentPose = getCurrentPoseData()
+
+                            if (currentPose != null) {
+                                // Normalize pose
+                                val features = normalizePose(currentPose, bestReferencePoint, bestNormFactor)
+
+                                if (features != null) {
+                                    // Predict move
+                                    val prediction = classifier.predict(features)
+                                    currentPrediction = prediction.first
+                                    currentConfidence = prediction.second
+
+                                    // Real-time display of current detection and confidence
+                                    if (currentTime - lastUpdateTime > UPDATE_INTERVAL) {
+                                        val confidencePercent = (currentConfidence * 100).toInt()
+                                        tips.text = "Target: ${currentMove.name}\n" +
+                                                "Current: $currentPrediction ($confidencePercent%)\n" +
+                                                "Threshold: ${(CONFIDENCE_THRESHOLD * 100).toInt()}%"
+                                        lastUpdateTime = currentTime
+
+                                        // Use color to indicate confidence
+                                        when {
+                                            currentConfidence < 0.5f -> tips.setTextColor(Color.RED)
+                                            currentConfidence < CONFIDENCE_THRESHOLD -> tips.setTextColor(Color.YELLOW)
+                                            else -> tips.setTextColor(Color.GREEN)
+                                        }
+                                    }
+
+                                    // Add to prediction window
+                                    predictionWindow.add(prediction)
+
+                                    // Keep window at fixed size
+                                    if (predictionWindow.size > WINDOW_SIZE) {
+                                        predictionWindow.removeAt(0)
+                                    }
+
+                                    // Check for sufficient consensus and confidence above threshold
+                                    val result = classifier.predictWithWindow(
+                                        features,
+                                        predictionWindow.dropLast(1),
+                                        REQUIRED_CONSENSUS
+                                    )
+
+                                    if (result.first != UNKNOWN_ACTION && result.second >= CONFIDENCE_THRESHOLD) {
+                                        detectedMove = result.first
+                                        confidence = result.second
+                                        endTime = System.currentTimeMillis()
+                                        detected = true
+
+                                        // Once a move is detected, immediately exit the loop
+                                        break
+                                    }
+                                }
+                            }
+
+                            // Short delay
+                            delay(50)
+                        }
+                    }
+
+                    // Reset text color
+                    tips.setTextColor(Color.WHITE)
+
+                    // Check results
+                    if (detected) {
+                        val reactionTime = endTime - startTime
+                        reactionTimes.add(reactionTime)
+
+                        val isCorrect = detectedMove == currentMove.name
+                        val confidencePercent = (confidence * 100).toInt()
+
+                        if (isCorrect) {
+                            correctCount++
+                            tips.text = "✓ Correct! '${detectedMove}' ($confidencePercent%)\n" +
+                                    "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                        } else {
+                            tips.text = "✗ Incorrect! You did '${detectedMove}' ($confidencePercent%)\n" +
+                                    "instead of '${currentMove.name}'\n" +
+                                    "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                        }
+                    } else {
+                        tips.text = "No move detected with sufficient confidence\n" +
+                                "Last prediction: $currentPrediction (${(currentConfidence * 100).toInt()}%)"
+                    }
+
+                    // Reset color bar
+                    colorBar.setBackgroundColor(Color.GRAY)
+
+                    // Display result (give user enough time to read)
+                    delay(3000)
+
+                    // Clearly indicate to user that this test is complete
+                    tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."
+                    delay(1500)
+                }
+
+                // Calculate final statistics
+                val accuracy = if (numTest > 0) correctCount.toFloat() / numTest else 0f
+                val avgReactionTime = if (reactionTimes.isNotEmpty())
+                    reactionTimes.average() / 1000.0 else 0.0
+
+                tips.text = "Test complete!\n" +
+                        "Accuracy: ${(accuracy * 100).toInt()}% ($correctCount/$numTest)\n" +
+                        "Average reaction time: ${String.format("%.2f", avgReactionTime)}s"
+
+                // Hide tips after showing results
+                delay(5000)
+                tips.isInvisible = true
+                colorBar.setBackgroundColor(Color.TRANSPARENT)
+            } catch (e: Exception) {
+                Log.e("ReactionTest", "Error during reaction test", e)
+                tips.text = "Test error: ${e.message}"
+                delay(3000)
+                tips.isInvisible = true
+            }
+            enableAllBtn()
+        }
+    }
+
+    fun disableAllBtn(){
+        leftBTN.isEnabled = false
+        allBTN.isEnabled = false
+        rightBTN.isEnabled = false
+    }
+
+    fun enableAllBtn(){
+        leftBTN.isEnabled = true
+        allBTN.isEnabled = true
+        rightBTN.isEnabled = true
     }
 
     // Interface: Get specific coordinates

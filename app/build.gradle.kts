@@ -67,6 +67,9 @@ dependencies {
     // ML Kit for pose detection
     implementation("com.google.mlkit:pose-detection:18.0.0-beta3")
 
+    //Smile
+    implementation ("com.github.haifengl:smile-core:2.6.0")
+
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation(libs.androidx.activity)

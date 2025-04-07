@@ -30,12 +30,13 @@
 
         <TextView
             android:id="@+id/tips"
-            android:layout_width="wrap_content"
+            android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginEnd="50dp"
             android:background="#44474747"
             android:text="tips"
+            android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textSize="34sp"
             android:textStyle="bold"
@@ -53,32 +54,51 @@
             app:layout_constraintTop_toTopOf="parent"
             />
 
-        <Button
-            android:id="@+id/trainAllMove"
-            android:layout_width="wrap_content"
+        <HorizontalScrollView
+            android:id="@+id/button_scroll_container"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Train AI model"
-            app:layout_constraintBottom_toTopOf="@+id/collectAllMove"
-            app:layout_constraintEnd_toEndOf="@+id/collectAllMove"
-            app:layout_constraintStart_toStartOf="@+id/collectAllMove" />
-
-        <Button
-            android:id="@+id/collectAllMove"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Collect Move data"
-            app:layout_constraintBottom_toTopOf="@+id/add_move"
-            app:layout_constraintEnd_toEndOf="@+id/add_move"
-            app:layout_constraintStart_toStartOf="@+id/add_move" />
-
-        <Button
-            android:id="@+id/add_move"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add move"
+            android:layout_alignParentBottom="true"
+            android:background="#B0B0B0"
+            android:padding="16dp"
+            android:scrollbars="none"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent">
+
+            <LinearLayout
+                android:id="@+id/button_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Buttons will be added here programmatically -->
+
+                <Button
+                    android:id="@+id/add_move"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add move" />
+
+                <Button
+                    android:id="@+id/collectAllMove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Collect Move data" />
+
+                <Button
+                    android:id="@+id/trainAllMove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Train AI model" />
+
+                <Button
+                    android:id="@+id/reaction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reaction Test" />
+            </LinearLayout>
+        </HorizontalScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
