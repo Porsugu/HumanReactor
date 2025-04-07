@@ -7,7 +7,7 @@ import com.example.humanreactor.customizedMove.NormalizedSample
  * Rule-based classifier that uses normalized samples
  */
 class RuleBasedClassifier(
-    private val confidenceThreshold: Float = 0.98f
+    private val confidenceThreshold: Float = 0.99f
 ) {
     companion object {
         private const val TAG = "RuleBasedClassifier"

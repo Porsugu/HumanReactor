@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
 import android.util.Log
+import android.view.PointerIcon
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
@@ -83,10 +84,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private val usedColors = mutableSetOf<Int>()
     private val moves = mutableListOf<Move>()
     private lateinit var moveDialogManager: MoveDialogManager
-//    private lateinit var addMove_BTN: Button
 
     //For Collecting
-//    private lateinit var collectALl_BTN:Button
     private lateinit var colorBar: View
     private lateinit var tips: TextView
     private var ref:Int = 0
@@ -94,14 +93,16 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     //For training
     private var isTrained = false
-//    private lateinit var trainAll_BTN: Button
     private lateinit var classifier: RuleBasedClassifier
 
-    //For reaction test
-//    private lateinit var reaction_BTN:Button
+    //For reaction
+    private lateinit var correctIcon: TextView
 
     // Stores the latest detected pose data
     private var currentPose: Pose? = null
+
+    //swtich tips display for user and developer
+    private var isDevelop = false
 
     // Drawing tools
     private val paint = Paint().apply {
@@ -144,40 +145,16 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
 
-        // For add move
-        //for buttons
-//        addMove_BTN = findViewById(R.id.add_move)
 
         //for add moves
         moveDialogManager = MoveDialogManager(this, moves, usedColors)
-//        addMove_BTN.setOnClickListener {
-//            moveDialogManager.showMoveManagementDialog()
-//        }
-
-        // For collect all move
-        //for buttons and views
-//        collectALl_BTN = findViewById(R.id.collectAllMove)
         colorBar = findViewById(R.id.color_bar)
         tips = findViewById(R.id.tips)
         tips.isInvisible = true
 
-//        collectALl_BTN.setOnClickListener{
-//            collectAllMoveSample(5, 1000)
-//        }
-
-        // For training model
-        //for buttons
-//        trainAll_BTN = findViewById(R.id.trainAllMove)
-//        trainAll_BTN.setOnClickListener {
-//            processAndTrainModel()
-//        }
-
-        //For reaction
-//        reaction_BTN = findViewById(R.id.reaction)
-//        reaction_BTN.setOnClickListener {
-//            testReaction(10)
-//        }
-
+        //for reaction
+        correctIcon = findViewById(R.id.correctSignText)
+        correctIcon.isInvisible = true
 
         //For unite btn
         allBTN_Icon = findViewById(R.id.allBTN_icon)
@@ -265,10 +242,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
             return
         }
-
-        // Disable buttons during the training session
-//        collectALl_BTN.isEnabled = false
-//        addMove_BTN.isEnabled = false
 
         resetAllMoveSamples()
 
@@ -897,7 +870,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                     val predictionWindow = mutableListOf<Pair<String, Float>>()
 
                     // Detection loop with timeout
-                    withTimeoutOrNull(10000) { // 10 seconds timeout
+                    withTimeoutOrNull(3000) { // 3 seconds timeout
                         while (!detected) {
                             val currentTime = System.currentTimeMillis()
 
@@ -917,17 +890,26 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                                     // Real-time display of current detection and confidence
                                     if (currentTime - lastUpdateTime > UPDATE_INTERVAL) {
                                         val confidencePercent = (currentConfidence * 100).toInt()
-                                        tips.text = "Target: ${currentMove.name}\n" +
-                                                "Current: $currentPrediction ($confidencePercent%)\n" +
-                                                "Threshold: ${(CONFIDENCE_THRESHOLD * 100).toInt()}%"
+                                        if (isDevelop){
+                                            tips.text = "Target: ${currentMove.name}\n" +
+                                                    "Current: $currentPrediction ($confidencePercent%)\n" +
+                                                    "Threshold: ${(CONFIDENCE_THRESHOLD * 100).toInt()}%"
+                                        }
+                                        else{
+                                            tips.text = "Do move: ${currentMove.name}\n"
+                                        }
+
                                         lastUpdateTime = currentTime
 
                                         // Use color to indicate confidence
-                                        when {
-                                            currentConfidence < 0.5f -> tips.setTextColor(Color.RED)
-                                            currentConfidence < CONFIDENCE_THRESHOLD -> tips.setTextColor(Color.YELLOW)
-                                            else -> tips.setTextColor(Color.GREEN)
+                                        if(isDevelop){
+                                            when {
+                                                currentConfidence < 0.5f -> tips.setTextColor(Color.RED)
+                                                currentConfidence < CONFIDENCE_THRESHOLD -> tips.setTextColor(Color.YELLOW)
+                                                else -> tips.setTextColor(Color.GREEN)
+                                            }
                                         }
+
                                     }
 
                                     // Add to prediction window
@@ -975,12 +957,32 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                         if (isCorrect) {
                             correctCount++
-                            tips.text = "✓ Correct! '${detectedMove}' ($confidencePercent%)\n" +
-                                    "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            if(isDevelop){
+                                tips.text = "✓ Correct! '${detectedMove}' ($confidencePercent%)\n" +
+                                        "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            }
+                            else{
+                                correctIcon.text = "✓"
+                                correctIcon.setTextColor(Color.GREEN)
+                                correctIcon.isInvisible = false
+                                tips.text = "Correct! Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            }
+
                         } else {
-                            tips.text = "✗ Incorrect! You did '${detectedMove}' ($confidencePercent%)\n" +
-                                    "instead of '${currentMove.name}'\n" +
-                                    "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            if(isDevelop){
+                                correctIcon.setTextColor(Color.RED)
+                                tips.text = "Incorrect! You did '${detectedMove}' ($confidencePercent%)\n" +
+                                        "instead of '${currentMove.name}'\n" +
+                                        "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            }
+                            else{
+                                correctIcon.text = "✗"
+                                correctIcon.isInvisible = false
+                                correctIcon.setTextColor(Color.RED)
+                                tips.text = "Incorrect! You did '${detectedMove}' ($confidencePercent%)\n" +
+                                        "instead of '${currentMove.name}'\n" +
+                                        "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                            }
                         }
                     } else {
                         tips.text = "No move detected with sufficient confidence\n" +
@@ -992,6 +994,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                     // Display result (give user enough time to read)
                     delay(3000)
+                    correctIcon.isInvisible = true
 
                     // Clearly indicate to user that this test is complete
                     tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."

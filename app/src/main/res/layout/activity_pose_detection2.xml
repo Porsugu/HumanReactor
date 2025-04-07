@@ -29,6 +29,16 @@
 
 
         <TextView
+            android:id="@+id/correctSignText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓"
+            android:textSize="150sp"
+            app:layout_constraintBottom_toTopOf="@+id/tips"
+            app:layout_constraintEnd_toEndOf="@+id/tips"
+            app:layout_constraintStart_toStartOf="@+id/tips" />
+
+        <TextView
             android:id="@+id/tips"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
@@ -38,7 +48,7 @@
             android:text="tips"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:textSize="34sp"
+            android:textSize="40sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
