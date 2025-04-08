@@ -15,7 +15,6 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:textSize="16sp"
-        android:text="hello there"
         android:textAlignment="center" />
 
 </androidx.cardview.widget.CardView>

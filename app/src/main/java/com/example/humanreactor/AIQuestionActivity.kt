@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.humanreactor.aiQuestion.DataManager
 import com.example.humanreactor.aiQuestion.OptionAdapter
+import com.example.humanreactor.aiQuestion.SelectTypeAcitivity
 import com.google.ai.client.generativeai.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
@@ -59,10 +60,10 @@ class AIQuestionActivity : AppCompatActivity() {
         optionsRecyclerView.adapter = optionAdapter
 
         // set up the next button to navigate to second activity
-//        nextButton.setOnClickListener {
-//            val intent = Intent(this, SecondActivity::class.java)
-//            startActivity(intent)
-//        }
+        nextButton.setOnClickListener {
+            val intent = Intent(this, SelectTypeAcitivity::class.java)
+            startActivity(intent)
+        }
 
     }
 

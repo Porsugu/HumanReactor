@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature
@@ -27,6 +28,15 @@
             android:exported="false" />
         <activity
             android:name=".AIQuestionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".aiQuestion.SelectTypeAcitivity"
+            android:exported="false" />
+        <activity
+            android:name=".aiQuestion.AIQuestionMainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".aiQuestion.AI_answer_result"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
