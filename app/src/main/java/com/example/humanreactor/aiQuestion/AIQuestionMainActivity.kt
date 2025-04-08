@@ -1,5 +1,6 @@
 package com.example.humanreactor.aiQuestion
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import com.example.humanreactor.R
@@ -12,6 +13,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -79,8 +81,8 @@ class AIQuestionMainActivity : AppCompatActivity() {
 
         highlightAnswers (selectedOption)
 
-        // add the option with choose right or choose wrong
-
+        // show the explanation dialog of containing answer explanation
+        showExplanationDialog(isCorrect, correctAnswerExplanation)
     }
 
     // highlighted shows the correct answer and the user option choice
@@ -105,8 +107,60 @@ class AIQuestionMainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showExplanationDialog(isCorrect : Boolean , correctAnswerExplanation : String){
+
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.answer_explanation_dialog, null)
+        val titleTextView = dialogView.findViewById<TextView>(R.id.dialog_result_title)
+        val explanationTextView = dialogView.findViewById<TextView>(R.id.dialog_explanation_text)
+        val closeButton = dialogView.findViewById<Button>(R.id.dialog_close_button)
+
+
+        // changing language of the dialog
+        if(DataManager.selectionData.language == "中文"){
+
+            if (isCorrect) {
+                titleTextView.text = "答對了！"
+
+            } else {
+                titleTextView.text = "答错了！正确答案是: $correctAnswer"
+            }
+
+            closeButton.text = "關閉"
+        }else {
+            if (isCorrect) {
+                titleTextView.text = "Well Done！"
+
+            } else {
+                titleTextView.text = "Opps！Correct Ans: $correctAnswer"
+            }
+        }
+        // setting the explanation of the answer
+        explanationTextView.text = correctAnswerExplanation
+
+        // creating the dialog key
+        val alertDialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        closeButton.setOnClickListener {
+            alertDialog.dismiss()
+
+            //here i think it wll be showing the loading page until it finish generating question
+            modelCall()
+        }
+
+        // showing the dialog
+        alertDialog.show()
+    }
+
     //calling the model for generating the question and multiple choice
     public fun modelCall(){
+
+        // reseting the color of the option box after finished a question
+        resetOptionBackgrounds()
+
+
         val generativeModel = GenerativeModel(
             modelName = "gemini-1.5-pro-latest",
             apiKey = "AIzaSyBB-qR26rDkBT96zzDNR0PZEMlOfHKB4Rc"
@@ -167,6 +221,15 @@ class AIQuestionMainActivity : AppCompatActivity() {
 //            questionTextView.text = response.text
         }
 
+    }
+
+
+    // reset the color of the backgrond option box
+    private fun resetOptionBackgrounds() {
+        mc1CardView.setBackgroundResource(R.color.Super_red) // 或其他默认背景
+        mc2CardView.setBackgroundResource(R.color.Super_red)
+        mc3CardView.setBackgroundResource(R.color.Super_red)
+        mc4CardView.setBackgroundResource(R.color.Super_red)
     }
 
     // analyse ai's response and show quesitons and options
