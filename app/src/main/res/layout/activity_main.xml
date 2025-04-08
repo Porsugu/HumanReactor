@@ -24,31 +24,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" >
 
-            <Button
-                android:id="@+id/custom_btn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Custom" />
-
-            <Button
-                android:id="@+id/ai_question_btn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="AI Question" />
-
             <RelativeLayout
                 android:id="@+id/poseBTN"
                 android:layout_width="250dp"
                 android:layout_height="250dp"
                 android:layout_gravity="center"
-                android:background="@drawable/big_frame">
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/menu_big_background"
+                android:foreground="@drawable/menu_big_selector">
 
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="10dp"
+                    android:padding="6dp"
                     app:srcCompat="@drawable/detector" />
 
                 <TextView
@@ -62,6 +50,13 @@
                     android:textColor="#FFFFFF"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/big_frame">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
 
             </RelativeLayout>
@@ -71,13 +66,13 @@
                 android:layout_width="250dp"
                 android:layout_height="250dp"
                 android:layout_gravity="center"
-                android:background="@drawable/big_frame">
+                >
 
                 <ImageView
 
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="10dp"
+                    android:padding="6dp"
                     app:srcCompat="@drawable/detector" />
 
                 <TextView
@@ -91,6 +86,13 @@
                     android:textColor="#FFFFFF"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/big_frame">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
 
             </RelativeLayout>

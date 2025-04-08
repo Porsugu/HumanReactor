@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <!-- Show your "cover" appearance when pressed -->
+        <shape>
+            <solid android:color="#4D7A7A7A" /> <!-- Semi-transparent overlay -->
+            <!-- Or reference your cover drawable -->
+        </shape>
+    </item>
+<!--    <item>-->
+<!--        &lt;!&ndash; Normal state (transparent or your default background) &ndash;&gt;-->
+<!--        <shape>-->
+<!--&lt;!&ndash;            <solid android:color="@android:color/transparent" />&ndash;&gt;-->
+<!--            <color android:color="@android:color/transparent" />-->
+
+<!--        </shape>-->
+<!--    </item>-->
+</selector>
