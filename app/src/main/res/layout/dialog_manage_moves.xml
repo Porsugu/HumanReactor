@@ -19,15 +19,19 @@
 
         <Button
             android:id="@+id/btnAddMove"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add" />
+            android:text="Add"
+            android:textColor="@color/android_purple" />
 
         <Button
             android:id="@+id/btnClose"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Close" />
+            android:text="Close"
+            android:textColor="@color/android_purple" />
     </LinearLayout>
 </LinearLayout>
