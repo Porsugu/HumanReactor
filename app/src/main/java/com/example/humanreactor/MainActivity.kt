@@ -28,6 +28,9 @@ class MainActivity : AppCompatActivity() {
         val goToMotionButton = findViewById<RelativeLayout>(R.id.poseBTN)
 
         val goAIQuestionActivityButton = findViewById<RelativeLayout>(R.id.aiQuestionBTN)
+
+        val exampleButton = findViewById<Button>(R.id.exampleBTN)
+
         goToMotionButton.foreground = ContextCompat.getDrawable(this, R.drawable.menu_big_selector)
         // 设置点击事件监听器
         goToMotionButton.setOnClickListener {
@@ -40,6 +43,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        exampleButton.setOnClickListener{
+            val intent = Intent(this, exampleActivity::class.java)
+            startActivity(intent)
+        }
     }
 
 
