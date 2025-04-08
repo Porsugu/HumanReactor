@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".PoseDetectionActivity">
+
+    <!-- Button layer -->
+
+    <!-- 相機預覽容器 -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+    </androidx.camera.view.PreviewView>
+
+    <!-- 姿態檢測覆蓋層 -->
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <TextView
+            android:id="@+id/correctSignText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓"
+            android:textColor="#FFFFFF"
+            android:textSize="150sp"
+            app:layout_constraintBottom_toTopOf="@+id/tips"
+            app:layout_constraintEnd_toEndOf="@+id/tips"
+            app:layout_constraintStart_toStartOf="@+id/tips" />
+
+        <TextView
+            android:id="@+id/tips"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="50dp"
+            android:layout_marginEnd="50dp"
+            android:background="#73474747"
+            android:text="tips"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            app:layout_constraintEnd_toEndOf="@+id/tips"
+            app:layout_constraintStart_toStartOf="@+id/tips"
+            app:layout_constraintTop_toBottomOf="@+id/tips" />
+
+        <View
+            android:id="@+id/color_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:background="#A02B2B2B">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/allBTN"
+                android:layout_width="230dp"
+                android:layout_height="50dp"
+                android:background="#911704"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/rightBTN"
+                app:layout_constraintStart_toEndOf="@+id/leftBTN"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/allBTN_icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@android:drawable/ic_menu_add" />
+
+                <TextView
+                    android:id="@+id/allBTN_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add Moves"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/allBTN_icon"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <RelativeLayout
+                android:id="@+id/leftBTN"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/leftBTN_Icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:rotation="270"
+                    app:srcCompat="@android:drawable/ic_menu_upload" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/leftBTN_Cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#4D7A7A7A"
+                    android:visibility="invisible">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rightBTN"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/rightBTN_Icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:rotation="90"
+                    app:srcCompat="@android:drawable/ic_menu_upload" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/rightBTN_Cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#4D7A7A7A"
+                    android:visibility="invisible">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </RelativeLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</RelativeLayout>

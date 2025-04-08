@@ -24,9 +24,6 @@
             android:name=".PoseDetectionActivity"
             android:exported="false" />
         <activity
-            android:name=".CustomMotionActivity"
-            android:exported="false" />
-        <activity
             android:name=".AIQuestionActivity"
             android:exported="false" />
         <activity

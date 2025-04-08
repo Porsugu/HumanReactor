@@ -2,6 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="Super_red">#911704</color>
+    <color name="android_purple">#D3BAFD</color>
     <color name="green">#8DEF80</color>
     <color name="red">#FF746C</color>
 </resources>

@@ -5,29 +5,98 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="#2B2B2B">
 
 
-    <Button
-        android:id="@+id/custom_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Custom"
+    <ScrollView
+        android:layout_width="409dp"
+        android:layout_height="600dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/ai_question_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="AI Question"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/custom_btn"
-        app:layout_constraintVertical_bias="0.116" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <RelativeLayout
+                android:id="@+id/poseBTN"
+                android:layout_width="250dp"
+                android:layout_height="250dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/menu_big_background"
+                android:foreground="@drawable/menu_big_selector">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    app:srcCompat="@drawable/detector" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="30dp"
+                    android:text="AI motion"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/big_frame">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/aiQuestionBTN"
+                android:layout_width="250dp"
+                android:layout_height="250dp"
+                android:layout_gravity="center"
+                >
+
+                <ImageView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    app:srcCompat="@drawable/detector" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="30dp"
+                    android:text="AI motion"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/big_frame">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            </RelativeLayout>
+        </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
