@@ -17,14 +17,16 @@
         android:id="@+id/tvMoveName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_gravity="center_vertical"
         android:layout_marginStart="8dp"
-        android:layout_gravity="center_vertical" />
+        android:layout_weight="1"
+        android:textSize="20sp" />
 
     <RelativeLayout
         android:id="@+id/editBTN"
-        android:layout_width="50dp"
-        android:layout_height="50dp">
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="5dp">
 
         <ImageView
             android:id="@+id/imageView"
@@ -44,8 +46,9 @@
 
     <RelativeLayout
         android:id="@+id/delBTN"
-        android:layout_width="50dp"
-        android:layout_height="50dp">
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="5dp">
 
         <ImageView
             android:id="@+id/imageView2"
