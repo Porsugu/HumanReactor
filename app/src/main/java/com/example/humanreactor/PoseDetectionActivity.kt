@@ -1300,6 +1300,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
             correctIcon.isInvisible = true
             enableAllBtn()
+            correctIcon.setTextColor(Color.WHITE)
         }
     }
 
