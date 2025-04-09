@@ -207,7 +207,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 moveDialogManager.showMoveManagementDialog()
             }
             else if(current_page == 1){
-                collectAllMoveSample(5, 2000)
+                collectAllMoveSample(5, 3000)
             }
             else if(current_page == 2){
                 processAndTrainModel()
@@ -311,7 +311,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                 // Calculate timing parameters
                 val totalDurationMillis = secondsForEachMove * 1000
-                val sampleIntervalMillis = totalDurationMillis / samplesForEachMove
+//                val sampleIntervalMillis = totalDurationMillis / samplesForEachMove
+                val sampleIntervalMillis = 1
 
                 // Start time for the entire collection period
                 val startTime = System.currentTimeMillis()
@@ -335,7 +336,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                         samplesCollected++
 
                         // Update progress in UI
-                        val sampleProgress = (samplesCollected * 100) / samplesForEachMove
+//                        val sampleProgress = (samplesCollected * 100) / samplesForEachMove
 //                        tips.text = "Collecting: $samplesCollected/$samplesForEachMove\n ($sampleProgress%)"
                         tips.text = "Hold your move!\nCollecting: $samplesCollected/$samplesForEachMove"
                         // Update progress bar

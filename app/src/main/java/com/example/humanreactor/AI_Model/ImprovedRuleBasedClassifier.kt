@@ -7,14 +7,15 @@ import com.example.humanreactor.customizedMove.NormalizedSample
  * Improved rule-based classifier that uses normalized samples
  */
 class ImprovedRuleBasedClassifier(
-    private val confidenceThreshold: Float = 0.90f
+    private val confidenceThreshold: Float = 0.9f
 ) {
     companion object {
         private const val TAG = "ImprovedRuleBasedClassifier"
         private const val UNKNOWN_ACTION = "unknown"
 
         // Distance threshold used for feature weight calculation
-        private const val FEATURE_SIGNIFICANCE_THRESHOLD = 0.03f
+        private const val FEATURE_SIGNIFICANCE_THRESHOLD = 0.1f
+//        0.05 0.03
     }
 
     // Feature definitions for each move
