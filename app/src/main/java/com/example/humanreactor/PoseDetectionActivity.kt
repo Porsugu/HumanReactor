@@ -4,10 +4,8 @@ import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
@@ -17,7 +15,6 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -38,7 +35,7 @@ import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseDetector
 import com.google.mlkit.vision.pose.PoseLandmark
-import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
+import com.google.mlkit.vision.pose.accurate.AccuratePoseDetectorOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -101,7 +98,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     //For training
     private var isTrained = false
-//    private lateinit var classifier: RuleBasedClassifier
+    //    private lateinit var classifier: RuleBasedClassifier
     private lateinit var classifier: ImprovedRuleBasedClassifier
 //    private lateinit var classifier: EnhancedRuleBasedClassifier
 
@@ -146,16 +143,18 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         // Initialize pose detector
-        val options = PoseDetectorOptions.Builder()
-            .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
+//        val options = PoseDetectorOptions.Builder()
+//            .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
+//            .build()
+
+        val options = AccuratePoseDetectorOptions.Builder()
+            .setDetectorMode(AccuratePoseDetectorOptions.STREAM_MODE)
             .build()
 
         poseDetector = PoseDetection.getClient(options)
 
         // Initialize camera executor
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-
 
         //for add moves
         moveDialogManager = MoveDialogManager(this, moves, usedColors)
@@ -544,49 +543,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
      * @param normFactor The normalization factor to use
      * @return List of normalized features, or null if normalization failed
      */
-//    private fun normalizePose(pose: Pose, referencePointType: Int, normFactor: Float): List<Float>? {
-//        // Define the keypoints to normalize
-//        val keypointTypes = listOf(
-//            PoseLandmark.NOSE,
-//            PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
-//            PoseLandmark.LEFT_ELBOW, PoseLandmark.RIGHT_ELBOW,
-//            PoseLandmark.LEFT_WRIST, PoseLandmark.RIGHT_WRIST,
-//            PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
-//        )
-//
-//        // Get the reference point
-//        val referencePoint = pose.getPoseLandmark(referencePointType)?.position
-//        if (referencePoint == null || normFactor <= 0) {
-//            return null // Cannot normalize without reference point or valid normalization factor
-//        }
-//
-//        // Create the normalized features list
-//        val normalizedFeatures = mutableListOf<Float>()
-//
-//        // Normalize each keypoint relative to the reference point
-//        for (keypointType in keypointTypes) {
-//            val keypoint = pose.getPoseLandmark(keypointType)
-//
-//            if (keypoint != null) {
-//                // Calculate normalized coordinates
-//                val normalizedX = (keypoint.position.x - referencePoint.x) / normFactor
-//                val normalizedY = (keypoint.position.y - referencePoint.y) / normFactor
-//
-//                // Add to feature list
-//                normalizedFeatures.add(normalizedX)
-//                normalizedFeatures.add(normalizedY)
-//            } else {
-//                // If keypoint is missing, add zeros
-//                normalizedFeatures.add(0f)
-//                normalizedFeatures.add(0f)
-//            }
-//        }
-//
-//        return normalizedFeatures
-//    }
-
     fun normalizePose(pose: Pose, referencePointType: Int, normFactor: Float): List<Float> {
-        // Check if all required pose landmarks are present
         val requiredLandmarks = listOf(
             PoseLandmark.NOSE,
             PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
@@ -595,167 +552,146 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
         )
 
-        // Ensure all required landmarks exist
         for (landmarkId in requiredLandmarks) {
             if (pose.getPoseLandmark(landmarkId) == null) {
-                // If any landmark is missing, return empty list or default value
                 return emptyList()
             }
         }
 
-        // Get all required landmarks
-        val nose = pose.getPoseLandmark(PoseLandmark.NOSE)!!.position
-        val leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)!!.position
-        val rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)!!.position
-        val leftElbow = pose.getPoseLandmark(PoseLandmark.LEFT_ELBOW)!!.position
-        val rightElbow = pose.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)!!.position
-        val leftWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST)!!.position
-        val rightWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST)!!.position
-        val leftHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)!!.position
-        val rightHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)!!.position
+        val nose = pose.getPoseLandmark(PoseLandmark.NOSE)!!
+        val leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)!!
+        val rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)!!
+        val leftElbow = pose.getPoseLandmark(PoseLandmark.LEFT_ELBOW)!!
+        val rightElbow = pose.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)!!
+        val leftWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST)!!
+        val rightWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST)!!
+        val leftHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)!!
+        val rightHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)!!
 
-        val bestRef = pose.getPoseLandmark(referencePointType)!!.position
+        val bestRef = pose.getPoseLandmark(referencePointType)!!
         val norm = normFactor
-        // Calculate reference distance (shoulder width) for normalization
-        val shoulderWidth = distance(leftShoulder, rightShoulder)
 
-        // Create feature vector
         val features = mutableListOf<Float>()
 
-        // 1. Upper body key angles
-
-//        // Shoulder angle (formed by left shoulder, nose, and right shoulder)
-//        features.add(calculateAngle(leftShoulder, nose, rightShoulder))
-//
-//        // Left elbow angle (left shoulder-left elbow-left wrist)
-//        features.add(calculateAngle(leftShoulder, leftElbow, leftWrist))
-//
-//        // Right elbow angle (right shoulder-right elbow-right wrist)
-//        features.add(calculateAngle(rightShoulder, rightElbow, rightWrist))
-//
-//        // Left shoulder angle (left elbow-left shoulder-left hip)
-//        features.add(calculateAngle(leftElbow, leftShoulder, leftHip))
-//
-//        // Right shoulder angle (right elbow-right shoulder-right hip)
-//        features.add(calculateAngle(rightElbow, rightShoulder, rightHip))
-//
-//        // Left waist angle (left shoulder-left hip-right hip)
-//        features.add(calculateAngle(leftShoulder, leftHip, rightHip))
-//
-//        // Right waist angle (right shoulder-right hip-left hip)
-//        features.add(calculateAngle(rightShoulder, rightHip, leftHip))
-
-//        1.1 Use best ref
+        // 1. Calculate key angles using 3D coordinates
         // Shoulder angle (formed by left shoulder, nose, and right shoulder)
-        features.add(calculateAngle(leftShoulder, bestRef, rightShoulder))
+        features.add(calculate3DAngle(leftShoulder, bestRef, rightShoulder))
 
         // Left elbow angle (left shoulder-left elbow-left wrist)
-        features.add(calculateAngle(leftShoulder, bestRef, leftWrist))
+        features.add(calculate3DAngle(leftShoulder, leftElbow, leftWrist))
 
         // Right elbow angle (right shoulder-right elbow-right wrist)
-        features.add(calculateAngle(rightShoulder, bestRef, rightWrist))
+        features.add(calculate3DAngle(rightShoulder, rightElbow, rightWrist))
 
         // Left shoulder angle (left elbow-left shoulder-left hip)
-        features.add(calculateAngle(leftElbow, bestRef, leftHip))
+        features.add(calculate3DAngle(leftElbow, leftShoulder, leftHip))
 
         // Right shoulder angle (right elbow-right shoulder-right hip)
-        features.add(calculateAngle(rightElbow, bestRef, rightHip))
+        features.add(calculate3DAngle(rightElbow, rightShoulder, rightHip))
 
         // Left waist angle (left shoulder-left hip-right hip)
-        features.add(calculateAngle(leftShoulder, bestRef, rightHip))
+        features.add(calculate3DAngle(leftShoulder, leftHip, rightHip))
 
         // Right waist angle (right shoulder-right hip-left hip)
-        features.add(calculateAngle(rightShoulder, bestRef, leftHip))
+        features.add(calculate3DAngle(rightShoulder, rightHip, leftHip))
 
-        // 2. Relative position features (normalized as ratio to shoulder width)
+        // 2. Relative position features (normalized relative to shoulder width)
 
         // Height difference between wrists and shoulders
-//        features.add(normalizeDistance(leftShoulder.y - leftWrist.y, shoulderWidth))
-//        features.add(normalizeDistance(rightShoulder.y - rightWrist.y, shoulderWidth))
-//
-//        // Horizontal distance from wrists to shoulders
-//        features.add(normalizeDistance(leftWrist.x - leftShoulder.x, shoulderWidth))
-//        features.add(normalizeDistance(rightWrist.x - rightShoulder.x, shoulderWidth))
-//
-//        // Relative distance from elbows to shoulders
-//        features.add(normalizeDistance(distance(leftShoulder, leftElbow), shoulderWidth))
-//        features.add(normalizeDistance(distance(rightShoulder, rightElbow), shoulderWidth))
-//
-//        // Relative distance from wrists to elbows
-//        features.add(normalizeDistance(distance(leftElbow, leftWrist), shoulderWidth))
-//        features.add(normalizeDistance(distance(rightElbow, rightWrist), shoulderWidth))
-//
-//        // Relative distance from shoulders to hips
-//        features.add(normalizeDistance(distance(leftShoulder, leftHip), shoulderWidth))
-//        features.add(normalizeDistance(distance(rightShoulder, rightHip), shoulderWidth))
+        features.add(normalize3DDistance(leftShoulder.position3D.y - leftWrist.position3D.y, norm))
+        features.add(normalize3DDistance(rightShoulder.position3D.y - rightWrist.position3D.y, norm))
 
-        //2.2 use
-    // Height difference between wrists and shoulders
-        features.add(normalizeDistance(leftShoulder.y - leftWrist.y, norm))
-        features.add(normalizeDistance(rightShoulder.y - rightWrist.y, norm))
+        // Horizontal distance between wrists and shoulders
+        features.add(normalize3DDistance(leftWrist.position3D.x - leftShoulder.position3D.x, norm))
+        features.add(normalize3DDistance(rightWrist.position3D.x - rightShoulder.position3D.x, norm))
 
-        // Horizontal distance from wrists to shoulders
-        features.add(normalizeDistance(leftWrist.x - leftShoulder.x, norm))
-        features.add(normalizeDistance(rightWrist.x - rightShoulder.x, norm))
+        // Relative distance between elbows and shoulders
+        features.add(normalize3DDistance(distance3D(leftShoulder, leftElbow), norm))
+        features.add(normalize3DDistance(distance3D(rightShoulder, rightElbow), norm))
 
-        // Relative distance from elbows to shoulders
-        features.add(normalizeDistance(distance(leftShoulder, leftElbow), norm))
-        features.add(normalizeDistance(distance(rightShoulder, rightElbow), norm))
+        // Relative distance between wrists and elbows
+        features.add(normalize3DDistance(distance3D(leftElbow, leftWrist), norm))
+        features.add(normalize3DDistance(distance3D(rightElbow, rightWrist), norm))
 
-        // Relative distance from wrists to elbows
-        features.add(normalizeDistance(distance(leftElbow, leftWrist), norm))
-        features.add(normalizeDistance(distance(rightElbow, rightWrist), norm))
+        // Relative distance between shoulders and hips
+        features.add(normalize3DDistance(distance3D(leftShoulder, leftHip), norm))
+        features.add(normalize3DDistance(distance3D(rightShoulder, rightHip), norm))
 
-        // Relative distance from shoulders to hips
-        features.add(normalizeDistance(distance(leftShoulder, leftHip), norm))
-        features.add(normalizeDistance(distance(rightShoulder, rightHip), norm))
+        // 3. Z-axis features (depth information)
+        // Depth difference between left and right wrists
+        features.add(normalize3DDistance(leftWrist.position3D.z - rightWrist.position3D.z, norm))
+
+        // Depth difference between shoulder center point and nose
+        val shoulderCenterZ = (leftShoulder.position3D.z + rightShoulder.position3D.z) / 2
+        features.add(normalize3DDistance(nose.position3D.z - shoulderCenterZ, norm))
 
         // Shoulder tilt angle (relative to horizontal line)
-        features.add(calculateSlope(leftShoulder, rightShoulder))
+        features.add(calculate3DSlope(leftShoulder, rightShoulder))
 
         // Hip tilt angle (relative to horizontal line)
-        features.add(calculateSlope(leftHip, rightHip))
+        features.add(calculate3DSlope(leftHip, rightHip))
 
-        // 3. Position of nose relative to shoulder center
-        val shoulderCenter = PointF(
-            (leftShoulder.x + rightShoulder.x) / 2,
-            (leftShoulder.y + rightShoulder.y) / 2
-        )
-        features.add(normalizeDistance(nose.x - shoulderCenter.x, normFactor))
-        features.add(normalizeDistance(nose.y - shoulderCenter.y, normFactor))
+        // 4. Position of nose relative to shoulder center point
+        val shoulderCenterX = (leftShoulder.position3D.x + rightShoulder.position3D.x) / 2
+        val shoulderCenterY = (leftShoulder.position3D.y + rightShoulder.position3D.y) / 2
+
+        features.add(normalize3DDistance(nose.position3D.x - shoulderCenterX, norm))
+        features.add(normalize3DDistance(nose.position3D.y - shoulderCenterY, norm))
 
         return features
     }
 
-    private fun distance(point1: PointF, point2: PointF): Float {
-        val dx = point1.x - point2.x
-        val dy = point1.y - point2.y
-        return Math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+    private fun distance3D(point1: PoseLandmark, point2: PoseLandmark): Float {
+        val dx = point1.position3D.x - point2.position3D.x
+        val dy = point1.position3D.y - point2.position3D.y
+        val dz = point1.position3D.z - point2.position3D.z
+        return Math.sqrt((dx * dx + dy * dy + dz * dz).toDouble()).toFloat()
     }
 
-    private fun calculateAngle(point1: PointF, point2: PointF, point3: PointF): Float {
-        val angle1 = Math.atan2((point1.y - point2.y).toDouble(), (point1.x - point2.x).toDouble())
-        val angle2 = Math.atan2((point3.y - point2.y).toDouble(), (point3.x - point2.x).toDouble())
+    private fun calculate3DAngle(point1: PoseLandmark, point2: PoseLandmark, point3: PoseLandmark): Float {
+        // Calculate vector A (point1 to point2)
+        val ax = point1.position3D.x - point2.position3D.x
+        val ay = point1.position3D.y - point2.position3D.y
+        val az = point1.position3D.z - point2.position3D.z
 
-        // 計算角度差，確保結果在 0-π 範圍內
-        var angle = Math.abs(angle1 - angle2)
-        if (angle > Math.PI) {
-            angle = 2 * Math.PI - angle
-        }
+        // Calculate vector B (point3 to point2)
+        val bx = point3.position3D.x - point2.position3D.x
+        val by = point3.position3D.y - point2.position3D.y
+        val bz = point3.position3D.z - point2.position3D.z
 
-        // 標準化為 0-1 範圍
+        // Calculate the dot product of the vectors
+        val dotProduct = ax * bx + ay * by + az * bz
+
+        // Calculate the magnitude of the vectors
+        val magnitudeA = Math.sqrt((ax * ax + ay * ay + az * az).toDouble()).toFloat()
+        val magnitudeB = Math.sqrt((bx * bx + by * by + bz * bz).toDouble()).toFloat()
+
+        // Calculate the cosine of the angle between the vectors
+        val cosAngle = dotProduct / (magnitudeA * magnitudeB)
+
+        // Calculate the angle in radians and convert to 0-1 range
+        val angle = Math.acos(cosAngle.coerceIn(-1.0f, 1.0f).toDouble())
         return (angle / Math.PI).toFloat()
     }
 
-    private fun calculateSlope(point1: PointF, point2: PointF): Float {
-        // 計算斜率角度 (弧度)
-        val angle = Math.atan2((point2.y - point1.y).toDouble(), (point2.x - point1.x).toDouble())
+    private fun calculate3DSlope(point1: PoseLandmark, point2: PoseLandmark): Float {
+        // Calculate the slope angle in 3D space
+        val dx = point2.position3D.x - point1.position3D.x
+        val dy = point2.position3D.y - point1.position3D.y
+        val dz = point2.position3D.z - point1.position3D.z
 
-        // 標準化為 -0.5 到 0.5 範圍，代表 -90° 到 90°
-        return (angle / Math.PI).toFloat()
+        // Calculate the horizontal angle in the xz plane
+        val horizontalAngle = Math.atan2(dz.toDouble(), dx.toDouble())
+
+        // Calculate the vertical angle with the horizontal plane
+        val verticalAngle = Math.atan2(dy.toDouble(),
+            Math.sqrt((dx * dx + dz * dz).toDouble()))
+
+        // Return the normalized vertical angle as a measure of slope
+        return (verticalAngle / Math.PI).toFloat()
     }
 
-    private fun normalizeDistance(distance: Float, referenceLength: Float): Float {
+    private fun normalize3DDistance(distance: Float, referenceLength: Float): Float {
         return if (referenceLength > 0) distance / referenceLength else 0f
     }
     /**
@@ -839,27 +775,46 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
      * @return The most stable normalization factor value
      */
     fun findMostStableNormalizationFactor(): Float {
-        // Collect measurements for different normalization methods
+        // Collect measurement results from different normalization methods
         val shoulderWidths = mutableListOf<Float>()
         val hipWidths = mutableListOf<Float>()
-        val rightShoulderToHipDists = mutableListOf<Float>()
-        val leftShoulderToHipDists = mutableListOf<Float>()
+        val shoulderDepths = mutableListOf<Float>() // Shoulder depth differences
+        val spineHeights = mutableListOf<Float>()   // Spine height
         val bboxDiagonals = mutableListOf<Float>()
 
         // Analyze all samples
         for (move in moves) {
             for (pose in move.samples) {
                 // Shoulder width
-                calculateDistance(pose,PoseLandmark.RIGHT_SHOULDER, PoseLandmark.LEFT_SHOULDER)?.let { shoulderWidths.add(it) }
+                val leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)
+                val rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)
+
+                if (leftShoulder != null && rightShoulder != null) {
+                    // 3D distance (considering depth)
+                    val shoulderDepth = Math.abs(leftShoulder.position3D.z - rightShoulder.position3D.z)
+                    shoulderDepths.add(shoulderDepth)
+                }
 
                 // Hip width
-                calculateDistance(pose,PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP)?.let { hipWidths.add(it) }
+                calculateDistance(pose, PoseLandmark.RIGHT_HIP, PoseLandmark.LEFT_HIP)?.let { hipWidths.add(it) }
 
-                // Right shoulder to Right hip distance
-                calculateDistance(pose,PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP)?.let { rightShoulderToHipDists.add(it) }
+                // Spine height (distance from nose to hip center)
+                val nose = pose.getPoseLandmark(PoseLandmark.NOSE)
+                val leftHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)
+                val rightHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)
 
-                // Left shoulder to hip distance
-                calculateDistance(pose,PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP)?.let { leftShoulderToHipDists.add(it) }
+                if (nose != null && leftHip != null && rightHip != null) {
+                    val hipCenterX = (leftHip.position3D.x + rightHip.position3D.x) / 2
+                    val hipCenterY = (leftHip.position3D.y + rightHip.position3D.y) / 2
+                    val hipCenterZ = (leftHip.position3D.z + rightHip.position3D.z) / 2
+
+                    val dx = nose.position3D.x - hipCenterX
+                    val dy = nose.position3D.y - hipCenterY
+                    val dz = nose.position3D.z - hipCenterZ
+
+                    val spineHeight = Math.sqrt((dx * dx + dy * dy + dz * dz).toDouble()).toFloat()
+                    spineHeights.add(spineHeight)
+                }
 
                 // Bounding box diagonal
                 calculateBboxDiagonal(pose)?.let { bboxDiagonals.add(it) }
@@ -867,47 +822,43 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         // Calculate coefficient of variation (CV) for each method
-        // Lower CV indicates more stable measurements
         val shoulderWidthCV = calculateCV(shoulderWidths)
         val hipWidthCV = calculateCV(hipWidths)
-        val rightShoulderToHipCV = calculateCV(rightShoulderToHipDists)
-        val leftShoulderToHipCV = calculateCV(leftShoulderToHipDists)
+        val shoulderDepthCV = calculateCV(shoulderDepths)
+        val spineHeightCV = calculateCV(spineHeights)
         val bboxDiagonalCV = calculateCV(bboxDiagonals)
 
-        // Log results for analysis
+        // Log analysis results
         Log.d("Normalization", "Coefficient of Variation Analysis:")
         Log.d("Normalization", "- Shoulder Width: $shoulderWidthCV (${shoulderWidths.size} samples)")
         Log.d("Normalization", "- Hip Width: $hipWidthCV (${hipWidths.size} samples)")
-        Log.d("Normalization", "- Right Shoulder to Hip: $rightShoulderToHipCV (${rightShoulderToHipDists.size} samples)")
-        Log.d("Normalization", "- Left Shoulder to Hip: $leftShoulderToHipCV (${leftShoulderToHipDists.size} samples)")
+        Log.d("Normalization", "- Shoulder Depth: $shoulderDepthCV (${shoulderDepths.size} samples)")
+        Log.d("Normalization", "- Spine Height: $spineHeightCV (${spineHeights.size} samples)")
         Log.d("Normalization", "- Bounding Box Diagonal: $bboxDiagonalCV (${bboxDiagonals.size} samples)")
 
-        // Consider only methods with sufficient sample coverage (90%)
-        val totalSamples = moves.sumOf { it.samples.size }
-        val threshold = 0
-
-        // Calculate the average value for each method with sufficient samples
+        // Only consider methods with sufficient sample coverage
         var bestCV = Float.MAX_VALUE
         var bestFactorAverage = 0f
 
-        if (shoulderWidthCV < bestCV) {
+        // Check and select the most stable normalization factor
+        if (shoulderWidthCV < bestCV && shoulderWidths.isNotEmpty()) {
             bestCV = shoulderWidthCV
             bestFactorAverage = shoulderWidths.average().toFloat()
         }
 
-        if (hipWidthCV < bestCV) {
+        if (hipWidthCV < bestCV && hipWidths.isNotEmpty()) {
             bestCV = hipWidthCV
             bestFactorAverage = hipWidths.average().toFloat()
         }
 
-        if (rightShoulderToHipCV < bestCV) {
-            bestCV = rightShoulderToHipCV
-            bestFactorAverage = rightShoulderToHipDists.average().toFloat()
+        if (shoulderDepthCV < bestCV && shoulderDepths.isNotEmpty()) {
+            bestCV = shoulderDepthCV
+            bestFactorAverage = shoulderDepths.average().toFloat()
         }
 
-        if (leftShoulderToHipCV < bestCV) {
-            bestCV = leftShoulderToHipCV
-            bestFactorAverage = leftShoulderToHipDists.average().toFloat()
+        if (spineHeightCV < bestCV && spineHeights.isNotEmpty()) {
+            bestCV = spineHeightCV
+            bestFactorAverage = spineHeights.average().toFloat()
         }
 
         // Bounding box is always available as a fallback
@@ -945,7 +896,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
      * Calculate the bounding box diagonal for the upper body landmarks
      */
     private fun calculateBboxDiagonal(pose: Pose): Float? {
-        // List of upper body landmarks to consider
+        // List of upper body key points to consider
         val landmarkTypes = listOf(
             PoseLandmark.NOSE,
             PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER,
@@ -954,29 +905,34 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP
         )
 
-        // Get all available landmarks
+        // Get all available key points
         val landmarks = landmarkTypes.mapNotNull { pose.getPoseLandmark(it) }
 
-        // If we don't have enough landmarks, return null
+        // Return null if there are not enough key points
         if (landmarks.size < 3) return null
 
-        // Find the minimum and maximum x and y coordinates
+        // Find the minimum and maximum values of x, y, z coordinates
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
+        var minZ = Float.MAX_VALUE
         var maxX = Float.MIN_VALUE
         var maxY = Float.MIN_VALUE
+        var maxZ = Float.MIN_VALUE
 
         for (landmark in landmarks) {
-            minX = minOf(minX, landmark.position.x)
-            minY = minOf(minY, landmark.position.y)
-            maxX = maxOf(maxX, landmark.position.x)
-            maxY = maxOf(maxY, landmark.position.y)
+            minX = minOf(minX, landmark.position3D.x)
+            minY = minOf(minY, landmark.position3D.y)
+            minZ = minOf(minZ, landmark.position3D.z)
+            maxX = maxOf(maxX, landmark.position3D.x)
+            maxY = maxOf(maxY, landmark.position3D.y)
+            maxZ = maxOf(maxZ, landmark.position3D.z)
         }
 
-        // Calculate the diagonal length of the bounding box
+        // Calculate the diagonal length of the 3D bounding box
         val width = maxX - minX
         val height = maxY - minY
-        return sqrt(width * width + height * height)
+        val depth = maxZ - minZ
+        return Math.sqrt((width * width + height * height + depth * depth).toDouble()).toFloat()
     }
 
     private fun calculateCV(values: List<Float>): Float {
@@ -1623,3 +1579,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }
+
+
+

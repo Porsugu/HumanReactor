@@ -526,7 +526,7 @@ import com.example.humanreactor.customizedMove.NormalizedSample
  * Improved rule-based classifier that uses normalized samples
  */
 class ImprovedRuleBasedClassifier(
-    private var confidenceThreshold: Float = 0.90f,
+    private var confidenceThreshold: Float = 0.8f,
     private val useDynamicThreshold: Boolean = false
 ) {
     companion object {
