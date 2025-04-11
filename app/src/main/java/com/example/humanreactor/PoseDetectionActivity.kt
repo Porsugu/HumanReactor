@@ -27,6 +27,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
+import com.example.humanreactor.AI_Model.EnhancedRuleBasedClassifier
+import com.example.humanreactor.AI_Model.FisherLDAClassifier
 import com.example.humanreactor.AI_Model.ImprovedRuleBasedClassifier
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
@@ -78,8 +80,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 //    private lateinit var rightBTN: ImageView
     private lateinit var leftBTN: RelativeLayout
     private lateinit var rightBTN: RelativeLayout
-    private lateinit var leftBTN_Cover: ConstraintLayout
-    private lateinit var rightBTN_Cover: ConstraintLayout
     private lateinit var allBTN: ConstraintLayout
     private lateinit var allBTN_Icon: ImageView
     private lateinit var allBTN_Text: TextView
@@ -103,6 +103,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private var isTrained = false
 //    private lateinit var classifier: RuleBasedClassifier
     private lateinit var classifier: ImprovedRuleBasedClassifier
+//    private lateinit var classifier: EnhancedRuleBasedClassifier
+
 
     //For reaction
     private lateinit var correctIcon: TextView
@@ -612,7 +614,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         val leftHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)!!.position
         val rightHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)!!.position
 
-        val besRef = pose.getPoseLandmark(referencePointType)!!.position
+        val bestRef = pose.getPoseLandmark(referencePointType)!!.position
+        val norm = normFactor
         // Calculate reference distance (shoulder width) for normalization
         val shoulderWidth = distance(leftShoulder, rightShoulder)
 
@@ -621,48 +624,91 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         // 1. Upper body key angles
 
+//        // Shoulder angle (formed by left shoulder, nose, and right shoulder)
+//        features.add(calculateAngle(leftShoulder, nose, rightShoulder))
+//
+//        // Left elbow angle (left shoulder-left elbow-left wrist)
+//        features.add(calculateAngle(leftShoulder, leftElbow, leftWrist))
+//
+//        // Right elbow angle (right shoulder-right elbow-right wrist)
+//        features.add(calculateAngle(rightShoulder, rightElbow, rightWrist))
+//
+//        // Left shoulder angle (left elbow-left shoulder-left hip)
+//        features.add(calculateAngle(leftElbow, leftShoulder, leftHip))
+//
+//        // Right shoulder angle (right elbow-right shoulder-right hip)
+//        features.add(calculateAngle(rightElbow, rightShoulder, rightHip))
+//
+//        // Left waist angle (left shoulder-left hip-right hip)
+//        features.add(calculateAngle(leftShoulder, leftHip, rightHip))
+//
+//        // Right waist angle (right shoulder-right hip-left hip)
+//        features.add(calculateAngle(rightShoulder, rightHip, leftHip))
+
+//        1.1 Use best ref
         // Shoulder angle (formed by left shoulder, nose, and right shoulder)
-        features.add(calculateAngle(leftShoulder, nose, rightShoulder))
+        features.add(calculateAngle(leftShoulder, bestRef, rightShoulder))
 
         // Left elbow angle (left shoulder-left elbow-left wrist)
-        features.add(calculateAngle(leftShoulder, leftElbow, leftWrist))
+        features.add(calculateAngle(leftShoulder, bestRef, leftWrist))
 
         // Right elbow angle (right shoulder-right elbow-right wrist)
-        features.add(calculateAngle(rightShoulder, rightElbow, rightWrist))
+        features.add(calculateAngle(rightShoulder, bestRef, rightWrist))
 
         // Left shoulder angle (left elbow-left shoulder-left hip)
-        features.add(calculateAngle(leftElbow, leftShoulder, leftHip))
+        features.add(calculateAngle(leftElbow, bestRef, leftHip))
 
         // Right shoulder angle (right elbow-right shoulder-right hip)
-        features.add(calculateAngle(rightElbow, rightShoulder, rightHip))
+        features.add(calculateAngle(rightElbow, bestRef, rightHip))
 
         // Left waist angle (left shoulder-left hip-right hip)
-        features.add(calculateAngle(leftShoulder, leftHip, rightHip))
+        features.add(calculateAngle(leftShoulder, bestRef, rightHip))
 
         // Right waist angle (right shoulder-right hip-left hip)
-        features.add(calculateAngle(rightShoulder, rightHip, leftHip))
+        features.add(calculateAngle(rightShoulder, bestRef, leftHip))
 
         // 2. Relative position features (normalized as ratio to shoulder width)
 
         // Height difference between wrists and shoulders
-        features.add(normalizeDistance(leftShoulder.y - leftWrist.y, shoulderWidth))
-        features.add(normalizeDistance(rightShoulder.y - rightWrist.y, shoulderWidth))
+//        features.add(normalizeDistance(leftShoulder.y - leftWrist.y, shoulderWidth))
+//        features.add(normalizeDistance(rightShoulder.y - rightWrist.y, shoulderWidth))
+//
+//        // Horizontal distance from wrists to shoulders
+//        features.add(normalizeDistance(leftWrist.x - leftShoulder.x, shoulderWidth))
+//        features.add(normalizeDistance(rightWrist.x - rightShoulder.x, shoulderWidth))
+//
+//        // Relative distance from elbows to shoulders
+//        features.add(normalizeDistance(distance(leftShoulder, leftElbow), shoulderWidth))
+//        features.add(normalizeDistance(distance(rightShoulder, rightElbow), shoulderWidth))
+//
+//        // Relative distance from wrists to elbows
+//        features.add(normalizeDistance(distance(leftElbow, leftWrist), shoulderWidth))
+//        features.add(normalizeDistance(distance(rightElbow, rightWrist), shoulderWidth))
+//
+//        // Relative distance from shoulders to hips
+//        features.add(normalizeDistance(distance(leftShoulder, leftHip), shoulderWidth))
+//        features.add(normalizeDistance(distance(rightShoulder, rightHip), shoulderWidth))
+
+        //2.2 use
+    // Height difference between wrists and shoulders
+        features.add(normalizeDistance(leftShoulder.y - leftWrist.y, norm))
+        features.add(normalizeDistance(rightShoulder.y - rightWrist.y, norm))
 
         // Horizontal distance from wrists to shoulders
-        features.add(normalizeDistance(leftWrist.x - leftShoulder.x, shoulderWidth))
-        features.add(normalizeDistance(rightWrist.x - rightShoulder.x, shoulderWidth))
+        features.add(normalizeDistance(leftWrist.x - leftShoulder.x, norm))
+        features.add(normalizeDistance(rightWrist.x - rightShoulder.x, norm))
 
         // Relative distance from elbows to shoulders
-        features.add(normalizeDistance(distance(leftShoulder, leftElbow), shoulderWidth))
-        features.add(normalizeDistance(distance(rightShoulder, rightElbow), shoulderWidth))
+        features.add(normalizeDistance(distance(leftShoulder, leftElbow), norm))
+        features.add(normalizeDistance(distance(rightShoulder, rightElbow), norm))
 
         // Relative distance from wrists to elbows
-        features.add(normalizeDistance(distance(leftElbow, leftWrist), shoulderWidth))
-        features.add(normalizeDistance(distance(rightElbow, rightWrist), shoulderWidth))
+        features.add(normalizeDistance(distance(leftElbow, leftWrist), norm))
+        features.add(normalizeDistance(distance(rightElbow, rightWrist), norm))
 
         // Relative distance from shoulders to hips
-        features.add(normalizeDistance(distance(leftShoulder, leftHip), shoulderWidth))
-        features.add(normalizeDistance(distance(rightShoulder, rightHip), shoulderWidth))
+        features.add(normalizeDistance(distance(leftShoulder, leftHip), norm))
+        features.add(normalizeDistance(distance(rightShoulder, rightHip), norm))
 
         // Shoulder tilt angle (relative to horizontal line)
         features.add(calculateSlope(leftShoulder, rightShoulder))
@@ -1000,29 +1046,32 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 // Initialize classifier
 //                classifier = RuleBasedClassifier()
                 classifier = ImprovedRuleBasedClassifier()
-
+//                classifier = EnhancedRuleBasedClassifier()
                 if (isDevelop){
                     tips.text = "Processing feature ranges for each move..."
                 }
                 else{
                     tips.text = "Analyzing each move..."
                 }
-                delay(500)
+
                 // Train the classifier (takes most time - 50% progress)
                 val success = withContext(Dispatchers.Default) {
                     // You could update progress inside train method for more granular updates
                     classifier.train(allSamples)
+
                 }
+                progressBar.progress = 80
+                delay(500)
                 progressBar.progress = 100
 
                 // Show results
                 if (success) {
-                    val trainedMoves = classifier.getTrainedMoves().joinToString(", ")
+//                    val trainedMoves = classifier.getTrainedMoves().joinToString(", ")
 
 
                     if (isDevelop){
                         tips.text = "Classifier trained successfully!\n" +
-                                "Trained moves: $trainedMoves\n" +
+//                                "Trained moves: $trainedMoves\n" +
                                 "Total samples: $totalSamples"
                     }
                     else{
@@ -1275,7 +1324,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
 
                     // Clearly indicate to user that this test is complete
-                    tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."
+                    if(i+1 < numTest){
+                        tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."
+                    }
+                    else{
+                        tips.text = "All ${i+1} tests completed."
+                    }
+
+//                    tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."
+
                     delay(1500)
                 }
 

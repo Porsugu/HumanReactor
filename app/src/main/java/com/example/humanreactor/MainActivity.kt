@@ -4,13 +4,18 @@ package com.example.humanreactor
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.RelativeLayout
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.core.ExperimentalGetImage
 import androidx.core.content.ContextCompat
-
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.load
+import coil.request.ImageRequest
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+//        enableEdgeToEdge()
 
         // 获取按钮的引用
 //        val goToMotionButton = findViewById<Button>(R.id.custom_btn)
@@ -47,6 +53,16 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, exampleActivity::class.java)
             startActivity(intent)
         }
+
+        val imageLoader = ImageLoader.Builder(this)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .build()
+
+        val background = findViewById<ImageView>(R.id.gif_background)
+        background.load(R.drawable.background, imageLoader)
+
     }
 
 
