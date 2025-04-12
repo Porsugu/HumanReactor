@@ -24,9 +24,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
-import com.example.humanreactor.AI_Model.EnhancedRuleBasedClassifier
+import com.example.humanreactor.AI_Model.Enhanced3DPoseClassifier
 import com.example.humanreactor.AI_Model.FisherLDAClassifier
 import com.example.humanreactor.AI_Model.ImprovedRuleBasedClassifier
+import com.example.humanreactor.AI_Model.LightweightTreeClassifier
+import com.example.humanreactor.AI_Model.NeuralNetworkClassifier
+
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
 import com.example.humanreactor.customizedMove.NormalizedSample
@@ -99,9 +102,9 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     //For training
     private var isTrained = false
     //    private lateinit var classifier: RuleBasedClassifier
-    private lateinit var classifier: ImprovedRuleBasedClassifier
-//    private lateinit var classifier: EnhancedRuleBasedClassifier
-
+//    private lateinit var classifier: ImprovedRuleBasedClassifier
+//    private lateinit var classifier: NeuralNetworkClassifier
+    private lateinit var classifier: LightweightTreeClassifier
 
     //For reaction
     private lateinit var correctIcon: TextView
@@ -736,34 +739,81 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     /**
      * Calculate the CV of each keypoint for a single move
      */
+//    private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
+//        val keypointCVs = mutableMapOf<Int, Float>()
+//
+//        // For each keypoint, calculate CV
+//        for (keypointType in keypointTypes) {
+//            val xCoordinates = mutableListOf<Float>()
+//            val yCoordinates = mutableListOf<Float>()
+//
+//            // Collect all instances of this keypoint
+//            for (pose in move.samples) {
+//                pose.getPoseLandmark(keypointType)?.let {
+//                    xCoordinates.add(it.position.x)
+//                    yCoordinates.add(it.position.y)
+//                }
+//            }
+//
+//            // If keypoint is missing in any sample, assign maximum CV
+//            if (xCoordinates.size < move.samples.size) {
+//                keypointCVs[keypointType] = Float.MAX_VALUE
+//                continue
+//            }
+//
+//            // Calculate CV for x and y coordinates
+//            val xCV = calculateCV(xCoordinates)
+//            val yCV = calculateCV(yCoordinates)
+//
+//            // Use the average of x and y CVs
+//            keypointCVs[keypointType] = (xCV + yCV) / 2
+//        }
+//
+//        return keypointCVs
+//    }
+
     private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
         val keypointCVs = mutableMapOf<Int, Float>()
 
-        // For each keypoint, calculate CV
+        // 對每個關鍵點計算 CV
         for (keypointType in keypointTypes) {
             val xCoordinates = mutableListOf<Float>()
             val yCoordinates = mutableListOf<Float>()
+            val zCoordinates = mutableListOf<Float>() // 新增 z 坐標列表
 
-            // Collect all instances of this keypoint
+            // 收集此關鍵點的所有實例
             for (pose in move.samples) {
                 pose.getPoseLandmark(keypointType)?.let {
                     xCoordinates.add(it.position.x)
                     yCoordinates.add(it.position.y)
+
+                    // 嘗試獲取 z 坐標
+                    try {
+                        zCoordinates.add(it.position3D.z)
+                    } catch (e: Exception) {
+                        // 如果訪問 z 坐標失敗，使用一個默認值或者該示例中的其他標記點的平均深度
+                        // 這裡我們簡單地使用 0 作為默認值
+                        zCoordinates.add(0f)
+                        Log.d("PoseDetection", "3D z-coordinate not available for ${keypointType}, using default")
+                    }
                 }
             }
 
-            // If keypoint is missing in any sample, assign maximum CV
+            // 如果在任何樣本中缺少關鍵點，分配最大 CV
             if (xCoordinates.size < move.samples.size) {
                 keypointCVs[keypointType] = Float.MAX_VALUE
                 continue
             }
 
-            // Calculate CV for x and y coordinates
+            // 計算 x、y 和 z 坐標的 CV
             val xCV = calculateCV(xCoordinates)
             val yCV = calculateCV(yCoordinates)
+            val zCV = calculateCV(zCoordinates) // 計算 z 坐標的 CV
 
-            // Use the average of x and y CVs
-            keypointCVs[keypointType] = (xCV + yCV) / 2
+            // 使用 x、y 和 z 的 CV 的加權平均
+            // 我們可以根據應用程序的具體需求調整權重
+            // 這裡我們給予 x 和 y 更高的權重，因為它們通常更可靠
+            keypointCVs[keypointType] = (xCV * 0.4f + yCV * 0.4f + zCV * 0.2f)
         }
 
         return keypointCVs
@@ -1001,8 +1051,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 delay(500)
                 // Initialize classifier
 //                classifier = RuleBasedClassifier()
-                classifier = ImprovedRuleBasedClassifier()
-//                classifier = EnhancedRuleBasedClassifier()
+//                classifier = ImprovedRuleBasedClassifier()
+                classifier = LightweightTreeClassifier()
                 if (isDevelop){
                     tips.text = "Processing feature ranges for each move..."
                 }
