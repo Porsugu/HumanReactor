@@ -5,86 +5,86 @@ import com.example.humanreactor.customizedMove.NormalizedSample
 import kotlin.random.Random
 
 /**
- * 輕量級決策樹森林分類器
+ * Lightweight Decision Tree Forest Classifier
  *
- * 特點:
- * - 比神經網絡更快速，適合手機運行
- * - 比規則基礎分類器更強大，能學習更複雜的模式
- * - 無需大量參數調整，易於實現和優化
+ * Features:
+ * - Faster than neural networks, suitable for mobile execution
+ * - More powerful than rule-based classifiers, capable of learning more complex patterns
+ * - Requires minimal parameter tuning, easy to implement and optimize
  */
 class LightweightTreeClassifier(
     private var confidenceThreshold: Float = 0.85f,
-    private val numTrees: Int = 20,                // 決策樹數量
-    private val maxDepth: Int = 10,                 // 最大樹深度
-    private val minSamplesPerLeaf: Int = 3,        // 每葉最小樣本數
-    private val featureSamplingRatio: Float = 0.7f // 特徵採樣比例
+    private val numTrees: Int = 20,                // Number of decision trees
+    private val maxDepth: Int = 10,                // Maximum tree depth
+    private val minSamplesPerLeaf: Int = 3,        // Minimum samples per leaf
+    private val featureSamplingRatio: Float = 0.7f // Feature sampling ratio
 ) {
     companion object {
         private const val TAG = "LightweightTreeClassifier"
         private const val UNKNOWN_ACTION = "unknown"
     }
 
-    // 決策樹森林
+    // Decision tree forest
     private val forest = mutableListOf<DecisionTree>()
 
-    // 分類標籤
+    // Classification labels
     private var classes = listOf<String>()
 
-    // 特徵重要性
+    // Feature importance
     private val featureImportance = mutableMapOf<Int, Float>()
 
-    // 是否已訓練
+    // Training status
     private var isTrained = false
 
-    // 特徵數量
+    // Number of features
     private var numFeatures = 0
 
     /**
-     * 決策樹節點類型
+     * Decision tree node types
      */
     sealed class TreeNode {
-        // 內部節點（分裂點）
+        // Internal node (split point)
         data class SplitNode(
-            val featureIndex: Int,       // 用於分裂的特徵索引
-            val threshold: Float,        // 分裂閾值
-            val leftChild: TreeNode,     // 左子樹 (≤ threshold)
-            val rightChild: TreeNode,    // 右子樹 (> threshold)
-            var importance: Float = 0f   // 此分裂節點的重要性
+            val featureIndex: Int,       // Feature index used for splitting
+            val threshold: Float,        // Split threshold
+            val leftChild: TreeNode,     // Left subtree (≤ threshold)
+            val rightChild: TreeNode,    // Right subtree (> threshold)
+            var importance: Float = 0f   // Importance of this split node
         ) : TreeNode()
 
-        // 葉節點（預測結果）
+        // Leaf node (prediction result)
         data class LeafNode(
-            val classProbabilities: Map<String, Float> // 各類別的機率
+            val classProbabilities: Map<String, Float> // Probabilities for each class
         ) : TreeNode()
     }
 
     /**
-     * 決策樹類
+     * Decision Tree class
      */
     inner class DecisionTree {
         var rootNode: TreeNode = TreeNode.LeafNode(mapOf())
         private val usedFeatureIndices = mutableSetOf<Int>()
 
         /**
-         * 建立決策樹
+         * Build decision tree
          */
         fun build(
             samples: List<NormalizedSample>,
             availableFeatures: List<Int>,
             currentDepth: Int = 0
         ): TreeNode {
-            // 檢查樣本數量和深度條件
+            // Check sample count and depth conditions
             if (samples.isEmpty()) {
                 return TreeNode.LeafNode(mapOf())
             }
 
-            // 計算當前節點的類別分佈
+            // Calculate current node's class distribution
             val classCounts = samples.groupBy { it.label }
                 .mapValues { it.value.size.toFloat() }
             val totalSamples = samples.size.toFloat()
             val classProbabilities = classCounts.mapValues { it.value / totalSamples }
 
-            // 判斷停止條件
+            // Check stopping conditions
             if (currentDepth >= maxDepth ||
                 samples.size <= minSamplesPerLeaf ||
                 classCounts.size <= 1 ||
@@ -92,23 +92,23 @@ class LightweightTreeClassifier(
                 return TreeNode.LeafNode(classProbabilities)
             }
 
-            // 找最佳分裂點
+            // Find best split point
             val bestSplit = findBestSplit(samples, availableFeatures)
 
-            // 如果找不到好的分裂點，返回葉節點
+            // If no good split point is found, return leaf node
             if (bestSplit.gain <= 0.001f) {
                 return TreeNode.LeafNode(classProbabilities)
             }
 
-            // 根據最佳分裂點分割數據
+            // Split data based on best split point
             val (leftSamples, rightSamples) = samples.partition {
                     sample -> sample.features.getOrElse(bestSplit.featureIndex) { 0f } <= bestSplit.threshold
             }
 
-            // 記錄已使用的特徵
+            // Record used features
             usedFeatureIndices.add(bestSplit.featureIndex)
 
-            // 創建分裂節點並遞迴建立子樹
+            // Create split node and recursively build subtrees
             return TreeNode.SplitNode(
                 featureIndex = bestSplit.featureIndex,
                 threshold = bestSplit.threshold,
@@ -119,19 +119,19 @@ class LightweightTreeClassifier(
         }
 
         /**
-         * 使用決策樹進行預測
+         * Make prediction using decision tree
          */
         fun predict(features: List<Float>): Map<String, Float> {
-            // 從根節點開始遍歷
+            // Start from root node
             var currentNode = rootNode
 
-            // 遍歷直到到達葉節點
+            // Traverse until leaf node is reached
             while (currentNode is TreeNode.SplitNode) {
                 val splitNode = currentNode
                 val featureIndex = splitNode.featureIndex
                 val featureValue = if (featureIndex < features.size) features[featureIndex] else 0f
 
-                // 根據特徵值選擇子樹
+                // Choose subtree based on feature value
                 currentNode = if (featureValue <= splitNode.threshold) {
                     splitNode.leftChild
                 } else {
@@ -139,36 +139,36 @@ class LightweightTreeClassifier(
                 }
             }
 
-            // 返回葉節點的類別機率
+            // Return class probabilities from leaf node
             return (currentNode as TreeNode.LeafNode).classProbabilities
         }
 
         /**
-         * 獲取決策樹使用的特徵索引
+         * Get feature indices used by the decision tree
          */
         fun getUsedFeatures(): Set<Int> {
             return usedFeatureIndices
         }
 
         /**
-         * 計算特徵重要性
+         * Calculate feature importance
          */
         fun calculateFeatureImportance(maxFeatureIndex: Int): Map<Int, Float> {
             val importance = mutableMapOf<Int, Float>()
 
-            // 初始化所有特徵重要性為0
+            // Initialize all feature importance to 0
             for (i in 0 until maxFeatureIndex) {
                 importance[i] = 0f
             }
 
-            // 遍歷樹的所有節點計算重要性
+            // Traverse all nodes to calculate importance
             calculateNodeImportance(rootNode, importance)
 
             return importance
         }
 
         /**
-         * 遞迴計算節點重要性
+         * Recursively calculate node importance
          */
         private fun calculateNodeImportance(
             node: TreeNode,
@@ -176,23 +176,23 @@ class LightweightTreeClassifier(
         ) {
             when (node) {
                 is TreeNode.SplitNode -> {
-                    // 累加分裂節點重要性
+                    // Accumulate split node importance
                     val featureIndex = node.featureIndex
                     importance[featureIndex] = (importance[featureIndex] ?: 0f) + node.importance
 
-                    // 遞迴處理子節點
+                    // Recursively process child nodes
                     calculateNodeImportance(node.leftChild, importance)
                     calculateNodeImportance(node.rightChild, importance)
                 }
                 is TreeNode.LeafNode -> {
-                    // 葉節點不計算重要性
+                    // Leaf nodes don't calculate importance
                 }
             }
         }
     }
 
     /**
-     * 分裂點評估結果
+     * Split evaluation result
      */
     private data class SplitEvaluation(
         val featureIndex: Int,
@@ -201,74 +201,74 @@ class LightweightTreeClassifier(
     )
 
     /**
-     * 訓練分類器
+     * Train classifier
      */
     fun train(samples: List<NormalizedSample>): Boolean {
         try {
-            Log.d(TAG, "開始訓練輕量級決策樹分類器, 樣本數: ${samples.size}")
+            Log.d(TAG, "Starting lightweight decision tree classifier training, sample count: ${samples.size}")
 
-            // 檢查樣本
+            // Check samples
             if (samples.isEmpty()) {
-                Log.e(TAG, "沒有訓練樣本")
+                Log.e(TAG, "No training samples")
                 return false
             }
 
-            // 初始化
+            // Initialize
             forest.clear()
             featureImportance.clear()
 
-            // 獲取類別標籤和特徵數量
+            // Get class labels and feature count
             classes = samples.map { it.label }.distinct().filterNot { it == UNKNOWN_ACTION }
 
             if (samples.firstOrNull()?.features.isNullOrEmpty()) {
-                Log.e(TAG, "樣本特徵為空")
+                Log.e(TAG, "Sample features are empty")
                 return false
             }
 
             numFeatures = samples.maxOf { it.features.size }
 
-            Log.d(TAG, "特徵數量: $numFeatures, 類別數量: ${classes.size}")
+            Log.d(TAG, "Feature count: $numFeatures, class count: ${classes.size}")
 
-            // 隨機森林訓練 (每棵樹使用數據的隨機子集)
+            // Random forest training (each tree uses random subset of data)
             for (i in 0 until numTrees) {
-                // 隨機選擇訓練樣本 (Bootstrap Sampling)
+                // Randomly select training samples (Bootstrap Sampling)
                 val bootstrapSamples = bootstrapSampling(samples)
 
-                // 隨機選擇特徵子集
+                // Randomly select feature subset
                 val featureIndices = randomFeatureSubset(numFeatures)
 
-                // 建立決策樹
+                // Build decision tree
                 val tree = DecisionTree()
                 tree.rootNode = tree.build(bootstrapSamples, featureIndices)
 
-                // 將樹加入森林
+                // Add tree to forest
                 forest.add(tree)
 
-                Log.d(TAG, "訓練完成決策樹 ${i+1}/$numTrees")
+                Log.d(TAG, "Completed training decision tree ${i+1}/$numTrees")
             }
 
-            // 計算特徵重要性 (所有樹的平均)
+            // Calculate feature importance (average of all trees)
             calculateOverallFeatureImportance()
 
             isTrained = true
-            Log.d(TAG, "輕量級決策樹分類器訓練完成")
+            Log.d(TAG, "Lightweight decision tree classifier training completed")
             return true
         } catch (e: Exception) {
-            Log.e(TAG, "訓練過程發生錯誤", e)
+            Log.e(TAG, "Error occurred during training", e)
             return false
         }
     }
 
     /**
-     * 計算整體特徵重要性
+     * Calculate overall feature importance
      */
     private fun calculateOverallFeatureImportance() {
-        // 初始化
+        // Initialize
         for (i in 0 until numFeatures) {
             featureImportance[i] = 0f
         }
 
-        // 累加所有樹的特徵重要性
+        // Accumulate feature importance from all trees
         forest.forEach { tree ->
             val treeImportance = tree.calculateFeatureImportance(numFeatures)
             treeImportance.forEach { (featureIndex, importance) ->
@@ -276,14 +276,14 @@ class LightweightTreeClassifier(
             }
         }
 
-        // 平均化特徵重要性
+        // Average feature importance
         if (forest.isNotEmpty()) {
             featureImportance.keys.forEach { key ->
                 featureImportance[key] = featureImportance[key]!! / forest.size
             }
         }
 
-        // 標準化到 [0, 1] 範圍
+        // Normalize to [0, 1] range
         val maxImportance = featureImportance.values.maxOrNull() ?: 1f
         if (maxImportance > 0) {
             featureImportance.keys.forEach { key ->
@@ -291,31 +291,31 @@ class LightweightTreeClassifier(
             }
         }
 
-        Log.d(TAG, "最重要的5個特徵: ${
+        Log.d(TAG, "Top 5 most important features: ${
             featureImportance.entries.sortedByDescending { it.value }.take(5)
                 .joinToString(", ") { "${it.key}: ${it.value}" }
         }")
     }
 
     /**
-     * 隨機選擇特徵子集
+     * Randomly select feature subset
      */
     private fun randomFeatureSubset(numFeatures: Int): List<Int> {
-        // 確定要選擇的特徵數量
+        // Determine number of features to select
         val numFeaturesToSelect = (numFeatures * featureSamplingRatio).toInt().coerceAtLeast(1)
 
-        // 生成所有特徵的索引列表並隨機打亂
+        // Generate list of all feature indices and shuffle randomly
         return (0 until numFeatures).shuffled().take(numFeaturesToSelect)
     }
 
     /**
-     * 使用自助法 (Bootstrap) 採樣
+     * Bootstrap sampling
      */
     private fun bootstrapSampling(samples: List<NormalizedSample>): List<NormalizedSample> {
         val result = mutableListOf<NormalizedSample>()
         val numSamples = samples.size
 
-        // 隨機選擇與原樣本集相同大小的樣本 (有放回抽樣)
+        // Randomly select samples with replacement
         repeat(numSamples) {
             val index = Random.nextInt(numSamples)
             result.add(samples[index])
@@ -325,32 +325,32 @@ class LightweightTreeClassifier(
     }
 
     /**
-     * 找到最佳分裂點
+     * Find best split point
      */
     private fun findBestSplit(
         samples: List<NormalizedSample>,
         availableFeatures: List<Int>
     ): SplitEvaluation {
-        // 初始化最佳分裂評估結果
+        // Initialize best split evaluation result
         var bestSplit = SplitEvaluation(0, 0f, 0f)
 
-        // 當前節點的熵 (不純度)
+        // Current node entropy (impurity)
         val currentEntropy = calculateEntropy(samples)
 
-        // 評估每個可用特徵的分裂點
+        // Evaluate split points for each available feature
         for (featureIndex in availableFeatures) {
-            // 獲取該特徵的所有值
+            // Get all values for this feature
             val featureValues = samples.mapNotNull {
                 if (featureIndex < it.features.size) it.features[featureIndex] else null
             }
 
             if (featureValues.isEmpty()) continue
 
-            // 選擇一些候選分裂閾值
+            // Select some candidate split thresholds
             val uniqueValues = featureValues.distinct().sorted()
             val candidateThresholds = mutableListOf<Float>()
 
-            // 如果唯一值太多，則選取等距分隔的點
+            // If too many unique values, select evenly spaced points
             if (uniqueValues.size > 10) {
                 val step = uniqueValues.size / 10
                 for (i in 0 until uniqueValues.size step step) {
@@ -360,29 +360,29 @@ class LightweightTreeClassifier(
                 candidateThresholds.addAll(uniqueValues)
             }
 
-            // 評估每個候選閾值
+            // Evaluate each candidate threshold
             for (threshold in candidateThresholds) {
-                // 根據閾值分割樣本
+                // Split samples based on threshold
                 val (leftSamples, rightSamples) = samples.partition {
                         sample ->
                     val value = if (featureIndex < sample.features.size) sample.features[featureIndex] else 0f
                     value <= threshold
                 }
 
-                // 如果分割不平衡，則跳過
+                // Skip if split is unbalanced
                 if (leftSamples.isEmpty() || rightSamples.isEmpty()) continue
 
-                // 計算左右子節點的熵
+                // Calculate entropy for left and right child nodes
                 val leftEntropy = calculateEntropy(leftSamples)
                 val rightEntropy = calculateEntropy(rightSamples)
 
-                // 計算熵增益
+                // Calculate information gain
                 val leftWeight = leftSamples.size.toFloat() / samples.size
                 val rightWeight = rightSamples.size.toFloat() / samples.size
                 val weightedEntropy = leftWeight * leftEntropy + rightWeight * rightEntropy
                 val gain = currentEntropy - weightedEntropy
 
-                // 更新最佳分裂點
+                // Update best split point
                 if (gain > bestSplit.gain) {
                     bestSplit = SplitEvaluation(featureIndex, threshold, gain)
                 }
@@ -393,16 +393,16 @@ class LightweightTreeClassifier(
     }
 
     /**
-     * 計算熵 (不純度度量)
+     * Calculate entropy (impurity measure)
      */
     private fun calculateEntropy(samples: List<NormalizedSample>): Float {
         if (samples.isEmpty()) return 0f
 
-        // 計算每個類別的樣本數
+        // Calculate sample count for each class
         val classCounts = samples.groupBy { it.label }
             .mapValues { it.value.size.toFloat() / samples.size }
 
-        // 計算熵
+        // Calculate entropy
         var entropy = 0.0
         for (p in classCounts.values) {
             if (p > 0) {
@@ -413,41 +413,41 @@ class LightweightTreeClassifier(
     }
 
     /**
-     * 預測動作
+     * Predict action
      */
     fun predict(features: List<Float>): Pair<String, Float> {
         if (!isTrained || forest.isEmpty()) {
             return Pair(UNKNOWN_ACTION, 0f)
         }
 
-        // 獲取森林中所有樹的預測
+        // Get predictions from all trees in the forest
         val predictions = forest.map { tree -> tree.predict(features) }
 
-        // 合併所有樹的預測結果
+        // Combine prediction results from all trees
         val combinedPrediction = mutableMapOf<String, Float>()
 
-        // 初始化所有類別的機率為0
+        // Initialize probabilities for all classes to 0
         classes.forEach { className ->
             combinedPrediction[className] = 0f
         }
 
-        // 累加所有樹的機率
+        // Accumulate probabilities from all trees
         predictions.forEach { prediction ->
             prediction.forEach { (className, probability) ->
                 combinedPrediction[className] = (combinedPrediction[className] ?: 0f) + probability
             }
         }
 
-        // 平均化機率
+        // Average probabilities
         combinedPrediction.keys.forEach { className ->
             combinedPrediction[className] = combinedPrediction[className]!! / forest.size
         }
 
-        // 找出機率最高的類別
+        // Find class with highest probability
         val bestPrediction = combinedPrediction.maxByOrNull { it.value }
             ?: return Pair(UNKNOWN_ACTION, 0f)
 
-        // 檢查置信度是否超過閾值
+        // Check if confidence exceeds threshold
         return if (bestPrediction.value >= confidenceThreshold) {
             Pair(bestPrediction.key, bestPrediction.value)
         } else {
@@ -456,41 +456,41 @@ class LightweightTreeClassifier(
     }
 
     /**
-     * 使用滑動窗口進行穩定預測
+     * Make stable predictions using sliding window
      */
     fun predictWithWindow(
         features: List<Float>,
         previousPredictions: List<Pair<String, Float>>,
         requiredConsensus: Int = 2
     ): Pair<String, Float> {
-        // 當前預測
+        // Current prediction
         val currentPrediction = predict(features)
 
-        // 結合之前的預測
+        // Combine with previous predictions
         val allPredictions = previousPredictions + currentPrediction
 
-        // 僅考慮非未知且置信度足夠高的預測
+        // Only consider non-unknown predictions with sufficient confidence
         val validPredictions = allPredictions
             .filter { it.first != UNKNOWN_ACTION && it.second >= confidenceThreshold * 0.95f }
 
-        // 計算每個預測的出現次數
+        // Count occurrences of each prediction
         val predictionCounts = validPredictions
             .groupBy { it.first }
             .mapValues { it.value.size }
 
-        // 找出最常見的預測
+        // Find most common prediction
         val mostCommon = predictionCounts.maxByOrNull { it.value }
 
-        // 檢查是否達到共識閾值
+        // Check if consensus threshold is reached
         return if (mostCommon != null && mostCommon.value >= requiredConsensus) {
-            // 計算此預測的平均置信度
+            // Calculate average confidence for this prediction
             val avgConfidence = validPredictions
                 .filter { it.first == mostCommon.key }
                 .map { it.second }
                 .average()
                 .toFloat()
 
-            // 添加穩定性獎勵
+            // Add stability bonus
             val stabilityBonus = minOf(0.1f, 0.02f * mostCommon.value)
             val finalConfidence = minOf(1.0f, avgConfidence + stabilityBonus)
 
@@ -501,40 +501,40 @@ class LightweightTreeClassifier(
     }
 
     /**
-     * 獲取已訓練的動作列表
+     * Get list of trained moves
      */
     fun getTrainedMoves(): List<String> {
         return classes
     }
 
     /**
-     * 檢查分類器是否已訓練
+     * Check if classifier is trained
      */
     fun isTrained(): Boolean {
         return isTrained
     }
 
     /**
-     * 獲取置信度閾值
+     * Get confidence threshold
      */
     fun getConfidenceThreshold(): Float {
         return confidenceThreshold
     }
 
     /**
-     * 獲取特徵重要性列表
+     * Get feature importance list
      */
     fun getFeatureImportance(): Map<Int, Float> {
         return featureImportance.toMap()
     }
 
     /**
-     * 獲取診斷信息
+     * Get diagnostic information
      */
     fun getDiagnosticInfo(): Map<String, Any> {
         val info = mutableMapOf<String, Any>()
 
-        // 基本信息
+        // Basic information
         info["numMoves"] = classes.size
         info["numTrees"] = forest.size
         info["maxDepth"] = maxDepth

@@ -88,7 +88,7 @@
                 android:id="@+id/allBTN"
                 android:layout_width="230dp"
                 android:layout_height="50dp"
-                android:background="#911704"
+                android:background="#00911704"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/rightBTN"
                 app:layout_constraintStart_toEndOf="@+id/leftBTN"
