@@ -13,7 +13,8 @@ data class Move (
     var isTrained: Boolean = false,
     var isCollected: Boolean = false,
     var samples:  MutableList<Pose> = mutableListOf(),
-    var normalizedSamples: MutableList<NormalizedSample> = mutableListOf()
+    var normalizedSamples: MutableList<NormalizedSample> = mutableListOf(),
+    var dbId: Int = 0
 ){
 
 }

@@ -33,6 +33,7 @@ import com.example.humanreactor.AI_Model.NeuralNetworkClassifier
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
 import com.example.humanreactor.customizedMove.NormalizedSample
+import com.example.humanreactor.databases.ActionDatabaseHelper
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
@@ -54,6 +55,8 @@ import kotlin.math.sqrt
 @androidx.camera.core.ExperimentalGetImage
 class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
+    //dp
+    private lateinit var dbHelper: ActionDatabaseHelper
     // Configuration options - display settings can be modified in onCreate
     private var showNose = true
     private var showLeftShoulder = true
@@ -90,6 +93,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     //For add user move
     private val usedColors = mutableSetOf<Int>()
     private val moves = mutableListOf<Move>()
+    private val moveCatalog = ""
     private lateinit var moveDialogManager: MoveDialogManager
 
     //For Collecting
@@ -126,6 +130,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pose_detection2)
 
+        //db
+        dbHelper = ActionDatabaseHelper(this)
         // Initialize views
         surfaceView = findViewById(R.id.surface_view)
         previewView = findViewById(R.id.preview_view)
@@ -160,7 +166,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         //for add moves
-        moveDialogManager = MoveDialogManager(this, moves, usedColors)
+        moveDialogManager = MoveDialogManager(this, dbHelper, moves, usedColors)
         colorBar = findViewById(R.id.color_bar)
         tips = findViewById(R.id.tips)
         tips.isInvisible = true
@@ -775,44 +781,34 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
         val keypointCVs = mutableMapOf<Int, Float>()
 
-        // 對每個關鍵點計算 CV
         for (keypointType in keypointTypes) {
             val xCoordinates = mutableListOf<Float>()
             val yCoordinates = mutableListOf<Float>()
-            val zCoordinates = mutableListOf<Float>() // 新增 z 坐標列表
+            val zCoordinates = mutableListOf<Float>()
 
-            // 收集此關鍵點的所有實例
             for (pose in move.samples) {
                 pose.getPoseLandmark(keypointType)?.let {
                     xCoordinates.add(it.position.x)
                     yCoordinates.add(it.position.y)
 
-                    // 嘗試獲取 z 坐標
                     try {
                         zCoordinates.add(it.position3D.z)
                     } catch (e: Exception) {
-                        // 如果訪問 z 坐標失敗，使用一個默認值或者該示例中的其他標記點的平均深度
-                        // 這裡我們簡單地使用 0 作為默認值
                         zCoordinates.add(0f)
                         Log.d("PoseDetection", "3D z-coordinate not available for ${keypointType}, using default")
                     }
                 }
             }
 
-            // 如果在任何樣本中缺少關鍵點，分配最大 CV
             if (xCoordinates.size < move.samples.size) {
                 keypointCVs[keypointType] = Float.MAX_VALUE
                 continue
             }
 
-            // 計算 x、y 和 z 坐標的 CV
             val xCV = calculateCV(xCoordinates)
             val yCV = calculateCV(yCoordinates)
-            val zCV = calculateCV(zCoordinates) // 計算 z 坐標的 CV
+            val zCV = calculateCV(zCoordinates)
 
-            // 使用 x、y 和 z 的 CV 的加權平均
-            // 我們可以根據應用程序的具體需求調整權重
-            // 這裡我們給予 x 和 y 更高的權重，因為它們通常更可靠
             keypointCVs[keypointType] = (xCV * 0.4f + yCV * 0.4f + zCV * 0.2f)
         }
 
