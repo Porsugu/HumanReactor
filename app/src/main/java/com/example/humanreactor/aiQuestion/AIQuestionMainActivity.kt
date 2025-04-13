@@ -226,10 +226,10 @@ class AIQuestionMainActivity : AppCompatActivity() {
 
     // reset the color of the backgrond option box
     private fun resetOptionBackgrounds() {
-        mc1CardView.setBackgroundResource(R.color.Super_red) // 或其他默认背景
-        mc2CardView.setBackgroundResource(R.color.Super_red)
-        mc3CardView.setBackgroundResource(R.color.Super_red)
-        mc4CardView.setBackgroundResource(R.color.Super_red)
+        mc1CardView.setBackgroundResource(R.color.red) // 或其他默认背景
+        mc2CardView.setBackgroundResource(R.color.red)
+        mc3CardView.setBackgroundResource(R.color.red)
+        mc4CardView.setBackgroundResource(R.color.red)
     }
 
     // analyse ai's response and show quesitons and options

@@ -6,4 +6,6 @@
     <color name="android_purple">#D3BAFD</color>
     <color name="main">#F4A261</color>
     <color name="onMain">#FFF8F0</color>
+    <color name="green">#4CAF50</color>
+    <color name="red">#F44336</color>
 </resources>
