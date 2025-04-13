@@ -10,7 +10,6 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -24,11 +23,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
-import com.example.humanreactor.AI_Model.Enhanced3DPoseClassifier
-import com.example.humanreactor.AI_Model.FisherLDAClassifier
-import com.example.humanreactor.AI_Model.ImprovedRuleBasedClassifier
 import com.example.humanreactor.AI_Model.LightweightTreeClassifier
-import com.example.humanreactor.AI_Model.NeuralNetworkClassifier
 
 import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
@@ -42,7 +37,6 @@ import com.google.mlkit.vision.pose.PoseLandmark
 import com.google.mlkit.vision.pose.accurate.AccuratePoseDetectorOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +66,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private var showLandmarkDots = false
     private var showCoordinatesText = false
 
+    private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var poseDetector: PoseDetector
     private lateinit var surfaceView: SurfaceView
@@ -79,8 +74,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var textViewStatus: TextView
 
     //For unite btn
-//    private lateinit var leftBTN: ImageView
-//    private lateinit var rightBTN: ImageView
     private lateinit var leftBTN: RelativeLayout
     private lateinit var rightBTN: RelativeLayout
     private lateinit var allBTN: ConstraintLayout
@@ -93,7 +86,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     //For add user move
     private val usedColors = mutableSetOf<Int>()
     private val moves = mutableListOf<Move>()
-    private val moveCatalog = ""
+    private var categoryId = mutableSetOf<Int>()
     private lateinit var moveDialogManager: MoveDialogManager
 
     //For Collecting
@@ -101,13 +94,12 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var tips: TextView
     private var ref:Int = 0
     private var fac:Float = 0f
-    private lateinit var progressBar: ProgressBar
+//    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBar: TextView
+    private lateinit var msgWindow:ConstraintLayout
 
     //For training
     private var isTrained = false
-    //    private lateinit var classifier: RuleBasedClassifier
-//    private lateinit var classifier: ImprovedRuleBasedClassifier
-//    private lateinit var classifier: NeuralNetworkClassifier
     private lateinit var classifier: LightweightTreeClassifier
 
     //For reaction
@@ -128,7 +120,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pose_detection2)
+        setContentView(R.layout.activity_pose_detection)
+//        setContentView(R.layout.activity_pose_detection2)
 
         //db
         dbHelper = ActionDatabaseHelper(this)
@@ -151,11 +144,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             )
         }
 
-        // Initialize pose detector
-//        val options = PoseDetectorOptions.Builder()
-//            .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
-//            .build()
-
         val options = AccuratePoseDetectorOptions.Builder()
             .setDetectorMode(AccuratePoseDetectorOptions.STREAM_MODE)
             .build()
@@ -166,18 +154,20 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         //for add moves
-        moveDialogManager = MoveDialogManager(this, dbHelper, moves, usedColors)
+        moveDialogManager = MoveDialogManager(this, dbHelper, moves, usedColors,categoryId)
         colorBar = findViewById(R.id.color_bar)
-        tips = findViewById(R.id.tips)
-        tips.isInvisible = true
+
+//        tips.isInvisible = true
 
         //for sampling and training
-        progressBar = findViewById(R.id.progressBar)
-        progressBar.isInvisible = true
+        progressBar = findViewById(R.id.progressBar2)
+        msgWindow = findViewById(R.id.msgWindow)
+        msgWindow.visibility = View.INVISIBLE
+        tips = findViewById(R.id.tips)
 
         //for reaction
         correctIcon = findViewById(R.id.correctSignText)
-        correctIcon.isInvisible = true
+        correctIcon.visibility = View.GONE
 
         //For unite btn
         allBTN_Icon = findViewById(R.id.allBTN_icon)
@@ -215,6 +205,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         allBTN.setOnClickListener {
             if(current_page == 0){
                 moveDialogManager.showMoveManagementDialog()
+                Log.d("categoryID", "categoryID: ${categoryId}")
             }
             else if(current_page == 1){
                 collectAllMoveSample(5, 3000)
@@ -263,10 +254,13 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private fun collectAllMoveSample(secondsForEachMove: Int, samplesForEachMove: Int) {
         if(moves.size == 0){
             CoroutineScope(Dispatchers.Main).launch {
-                tips.isInvisible = false
+//                tips.isInvisible = false
+                msgWindow.visibility = View.VISIBLE
+                progressBar.visibility = View.INVISIBLE
                 tips.text = "Please add at least 1 move first!!!!"
                 delay(2000)
-                tips.isInvisible = true
+//                tips.isInvisible = true
+                msgWindow.visibility = View.INVISIBLE
             }
             return
         }
@@ -274,12 +268,19 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         resetAllMoveSamples()
 
         CoroutineScope(Dispatchers.Main).launch {
+//            startCamera()
+            msgWindow.visibility = View.VISIBLE
+            progressBar.visibility = View.VISIBLE
+
             isTrained = false
             disableAllBtn()
 
             // Setup progress bar
-            progressBar.isInvisible = false
-            progressBar.progress = 0
+//            progressBar.isInvisible = false
+//            progressBar.progress = 0
+            msgWindow.visibility = View.VISIBLE
+//            progressBar.visibility = View.VISIBLE
+            progressBar.text = progressBarStr(0)
 
             tips.isInvisible = false  // Make sure tips are visible
             tips.text = "Start Sampling"
@@ -297,8 +298,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             val progressPerMove = 90 / totalMoves
 
             // Set initial progress after setup
-            progressBar.progress = setupProgress
-
+//            progressBar.progress = setupProgress
+            progressBar.text = progressBarStr(setupProgress)
             // Iterate through each move in the list
             for ((moveIndex, move) in moves.withIndex()) {
                 // Preparation countdown
@@ -346,13 +347,13 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                         samplesCollected++
 
                         // Update progress in UI
-//                        val sampleProgress = (samplesCollected * 100) / samplesForEachMove
-//                        tips.text = "Collecting: $samplesCollected/$samplesForEachMove\n ($sampleProgress%)"
                         tips.text = "Hold your move!\nCollecting: $samplesCollected/$samplesForEachMove"
                         // Update progress bar
                         val currentMoveBaseProgress = setupProgress + (moveIndex * progressPerMove)
                         val currentProgress = currentMoveBaseProgress + (samplesCollected * progressPerSample).toInt()
-                        progressBar.progress = currentProgress
+//                        progressBar.progress = currentProgress
+                        progressBar.text = progressBarStr(currentProgress)
+
 
                         // Wait for the next sample interval
                         if (samplesCollected < samplesForEachMove) {
@@ -381,16 +382,20 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
 
             // Set progress to 100% when all done
-            progressBar.progress = 100
+//            progressBar.progress = 100
+            progressBar.text = progressBarStr(100)
 
             // Training session completed - CLEAR the color bar
             colorBar.setBackgroundColor(Color.TRANSPARENT)  // Clear the color
             tips.text = "Sampling success!"
 
             delay(1500)
-            tips.isInvisible = true
-            progressBar.isInvisible = true
+//            tips.isInvisible = true
+//            progressBar.isInvisible = true
+
+            msgWindow.visibility = View.INVISIBLE
             enableAllBtn()
+//            stopCamera()
         }
     }
 
@@ -417,6 +422,9 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     //For training
     private fun processAndTrainModel() {
         CoroutineScope(Dispatchers.Main).launch {
+            msgWindow.visibility = View.VISIBLE
+            progressBar.visibility = View.VISIBLE
+
             disableAllBtn()
             try {
                 normalizeData()
@@ -429,17 +437,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
             enableAllBtn()
             isTrained = true
+            msgWindow.visibility = View.INVISIBLE
         }
 
     }
 
     private suspend fun normalizeData() {
-        // Set up progress bar and text
-        if( !isDevelop){
-            progressBar.isInvisible = false
-        }
-        progressBar.progress = 0
-        tips.isInvisible = false
+//        progressBar.progress = 0
+        progressBar.text = progressBarStr(0)
+//        tips.isInvisible = false
         if(isDevelop){
             tips.text = "Preparing normalization factors..."
         }
@@ -459,7 +465,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         ref = bestRelativePoint
 
         // Update progress (10%)
-        progressBar.progress = 10
+//        progressBar.progress = 10
+        progressBar.text = progressBarStr(10)
         delay(500)
         val bestNormFactor = withContext(Dispatchers.Default) {
             findMostStableNormalizationFactor()
@@ -467,7 +474,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         fac = bestNormFactor
 
         // Update progress (20%)
-        progressBar.progress = 20
+//        progressBar.progress = 20
+        progressBar.text = progressBarStr(20)
 
         if(isDevelop){
             tips.text = "Normalization factors calculated."
@@ -506,7 +514,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                     // Update progress for each sample
                     processedSamples++
                     withContext(Dispatchers.Main) {
-                        progressBar.progress = 20 + (processedSamples * progressPerSample).toInt()
+//                        progressBar.progress = 20 + (processedSamples * progressPerSample).toInt()
+                        progressBar.text = progressBarStr(20 + (processedSamples * progressPerSample).toInt())
                     }
                 }
 
@@ -528,7 +537,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         // Show final result
-        progressBar.progress = 100
+//        progressBar.progress = 100
+        progressBar.text = progressBarStr(100)
         val successRate = if (totalSamples > 0) (successfulNormalizations * 100 / totalSamples) else 0
         if(isDevelop){
             tips.text = "Normalization complete! $successfulNormalizations/$totalSamples samples ($successRate%)"
@@ -542,7 +552,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 //        delay(1000)
 
         // Hide progress bar when done
-        progressBar.isInvisible = true
+//        msgWindow.visibility = View.INVISIBLE
     }
 
     /**
@@ -745,39 +755,6 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     /**
      * Calculate the CV of each keypoint for a single move
      */
-//    private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
-//        val keypointCVs = mutableMapOf<Int, Float>()
-//
-//        // For each keypoint, calculate CV
-//        for (keypointType in keypointTypes) {
-//            val xCoordinates = mutableListOf<Float>()
-//            val yCoordinates = mutableListOf<Float>()
-//
-//            // Collect all instances of this keypoint
-//            for (pose in move.samples) {
-//                pose.getPoseLandmark(keypointType)?.let {
-//                    xCoordinates.add(it.position.x)
-//                    yCoordinates.add(it.position.y)
-//                }
-//            }
-//
-//            // If keypoint is missing in any sample, assign maximum CV
-//            if (xCoordinates.size < move.samples.size) {
-//                keypointCVs[keypointType] = Float.MAX_VALUE
-//                continue
-//            }
-//
-//            // Calculate CV for x and y coordinates
-//            val xCV = calculateCV(xCoordinates)
-//            val yCV = calculateCV(yCoordinates)
-//
-//            // Use the average of x and y CVs
-//            keypointCVs[keypointType] = (xCV + yCV) / 2
-//        }
-//
-//        return keypointCVs
-//    }
-
     private fun calculateKeypointCVsForMove(move: Move, keypointTypes: List<Int>): Map<Int, Float> {
         val keypointCVs = mutableMapOf<Int, Float>()
 
@@ -997,111 +974,124 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         return currentPose
     }
 
-    private fun trainModel() {
-        CoroutineScope(Dispatchers.Main).launch {
-            disableAllBtn()
-            tips.isInvisible = false
-            progressBar.isInvisible = false
-            progressBar.progress = 0
-            if(isDevelop){
-                tips.text = "Preparing to train classifier..."
+    private suspend fun trainModel() {
+        disableAllBtn()
+        progressBar.text = progressBarStr(0)
+        if(isDevelop){
+            tips.text = "Preparing to train classifier..."
+        }
+        else{
+            tips.text = "Load data..."
+        }
+
+
+        try {
+            // Check if we have samples (10% progress)
+//                progressBar.progress = 10
+            for (i in 1..10) {
+                progressBar.text = progressBarStr(i)
+                delay(200)
+            }
+//            progressBar.text = progressBarStr(10)
+            val totalSamples = moves.sumOf { it.normalizedSamples.size }
+            if (totalSamples == 0) {
+                if(isDevelop){
+                    tips.text = "Cannot train classifier: No normalized samples available"
+                }
+                else{
+                    tips.text = "Fail to load: Please make sure that your upper body is in the screen."
+                }
+
+                delay(1000)
+                tips.isInvisible = true
+                progressBar.isInvisible = true
+                enableAllBtn()
+                return
+            }
+            if (isDevelop){
+                tips.text = "Training classifier with $totalSamples samples..."
             }
             else{
-                tips.text = "Load data..."
+                tips.text = "Training AI model..."
             }
 
+//                progressBar.progress = 20
 
-            try {
-                // Check if we have samples (10% progress)
-                progressBar.progress = 10
-                val totalSamples = moves.sumOf { it.normalizedSamples.size }
-                if (totalSamples == 0) {
-                    if(isDevelop){
-                        tips.text = "Cannot train classifier: No normalized samples available"
-                    }
-                    else{
-                        tips.text = "Fail to load: Please make sure that your upper body is in the screen."
-                    }
+            progressBar.text = progressBarStr(20)
+            for (i in 10..20) {
+                progressBar.text = progressBarStr(i)
+                delay(200)
+            }
+//            delay(500)
 
-                    delay(3000)
-                    tips.isInvisible = true
-                    progressBar.isInvisible = true
-                    enableAllBtn()
-                    return@launch
-                }
-                if (isDevelop){
-                    tips.text = "Training classifier with $totalSamples samples..."
-                }
-                else{
-                    tips.text = "Training AI model..."
-                }
-
-                progressBar.progress = 20
-                delay(500)
-
-                // Collect all samples (30% progress)
-                val allSamples = withContext(Dispatchers.Default) {
-                    moves.flatMap { it.normalizedSamples }
-                }
-                progressBar.progress = 50
-                delay(500)
-                // Initialize classifier
+            // Collect all samples (30% progress)
+            val allSamples = withContext(Dispatchers.Default) {
+                moves.flatMap { it.normalizedSamples }
+            }
+//                progressBar.progress = 50
+//            progressBar.text = progressBarStr(50)
+            for (i in 20..50) {
+                progressBar.text = progressBarStr(i)
+                delay(200)
+            }
+//            delay(500)
+            // Initialize classifier
 //                classifier = RuleBasedClassifier()
 //                classifier = ImprovedRuleBasedClassifier()
-                classifier = LightweightTreeClassifier()
-                if (isDevelop){
-                    tips.text = "Processing feature ranges for each move..."
-                }
-                else{
-                    tips.text = "Analyzing each move..."
-                }
-
-                // Train the classifier (takes most time - 50% progress)
-                val success = withContext(Dispatchers.Default) {
-                    // You could update progress inside train method for more granular updates
-                    classifier.train(allSamples)
-
-                }
-                progressBar.progress = 80
-                delay(500)
-                progressBar.progress = 100
-
-                // Show results
-                if (success) {
-//                    val trainedMoves = classifier.getTrainedMoves().joinToString(", ")
-
-
-                    if (isDevelop){
-                        tips.text = "Classifier trained successfully!\n" +
-//                                "Trained moves: $trainedMoves\n" +
-                                "Total samples: $totalSamples"
-                    }
-                    else{
-                        tips.text = "Train success!"
-                    }
-                } else {
-                    if(isDevelop){
-                        tips.text = "Classifier training failed. Please try again."
-                    }
-                    else{
-                        tips.text = "Train failed."
-                    }
-                }
-
-                delay(3000)
-                tips.isInvisible = true
-                progressBar.isInvisible = true
-            } catch (e: Exception) {
-                Log.e("ModelTraining", "Error during classifier training", e)
-                tips.text = "Training error: ${e.message}"
-                delay(3000)
-                tips.isInvisible = true
-                progressBar.isInvisible = true
+            classifier = LightweightTreeClassifier()
+            if (isDevelop){
+                tips.text = "Processing feature ranges for each move..."
+            }
+            else{
+                tips.text = "Analyzing each move..."
             }
 
-            enableAllBtn()
-            isTrained = true
+            // Train the classifier (takes most time - 50% progress)
+            val success = withContext(Dispatchers.Default) {
+                // You could update progress inside train method for more granular updates
+                classifier.train(allSamples)
+
+            }
+//                progressBar.progress = 80
+
+            for (i in 50..100) {
+                progressBar.text = progressBarStr(i)
+                delay(200)
+            }
+//            progressBar.text = progressBarStr(80)
+//            delay(500)
+////                progressBar.progress = 100
+//            progressBar.text = progressBarStr(100)
+
+            // Show results
+            if (success) {
+//                    val trainedMoves = classifier.getTrainedMoves().joinToString(", ")
+                if (isDevelop){
+                    tips.text = "Classifier trained successfully!\n" +
+                            "Total samples: $totalSamples"
+                }
+                else{
+                    tips.text = "Train success!"
+                }
+            } else {
+                if(isDevelop){
+                    tips.text = "Classifier training failed. Please try again."
+                }
+                else{
+                    tips.text = "Train failed."
+                }
+            }
+
+            delay(1000)
+
+        } catch (e: Exception) {
+            Log.e("ModelTraining", "Error during classifier training", e)
+            tips.text = "Training error: ${e.message}"
+            delay(1000)
+
         }
+        enableAllBtn()
+        isTrained = true
     }
 
     /**
@@ -1118,10 +1108,12 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         val CONFIDENCE_THRESHOLD = classifier.getConfidenceThreshold()
 
         CoroutineScope(Dispatchers.Main).launch {
+            msgWindow.visibility = View.VISIBLE
+            progressBar.visibility = View.INVISIBLE
             disableAllBtn()
             try {
                 correctIcon.isInvisible = false
-                tips.isInvisible = false
+//                tips.isInvisible = false
 //                tips.text = "Get ready for reaction test!\nThe color bar will change colors.\nMake the corresponding move as quickly as possible."
                 tips.text = "Reaction test!"
                 colorBar.setBackgroundColor(Color.GRAY)
@@ -1349,17 +1341,18 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                 // Hide tips after showing results
                 delay(5000)
-                tips.isInvisible = true
+//                tips.isInvisible = true
                 colorBar.setBackgroundColor(Color.TRANSPARENT)
             } catch (e: Exception) {
                 Log.e("ReactionTest", "Error during reaction test", e)
                 tips.text = "Test error: ${e.message}"
                 delay(3000)
-                tips.isInvisible = true
+//                tips.isInvisible = true
             }
             correctIcon.isInvisible = true
             enableAllBtn()
             correctIcon.setTextColor(Color.WHITE)
+            msgWindow.visibility = View.INVISIBLE
         }
     }
 
@@ -1403,8 +1396,9 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+//            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
+            cameraProvider = cameraProviderFuture.get()
             // Set up preview use case
             val preview = Preview.Builder()
                 .build()
@@ -1443,6 +1437,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
 
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun stopCamera() {
+        if (::cameraProvider.isInitialized) {
+            // This will unbind all use cases and effectively stop the camera
+            cameraProvider.unbindAll()
+            previewView.removeAllViews()
+            Toast.makeText(this, "Camera stopped", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun processPose(pose: Pose) {
@@ -1624,6 +1627,34 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
+
+    fun progressBarStr(percentage: Int, totalBlocks: Int = 10): String {
+        val validPercentage = percentage.coerceIn(0, 100)
+
+        val filledBlocks = (validPercentage.toFloat() / 100 * totalBlocks).toInt()
+
+        val progressBar = StringBuilder()
+
+        progressBar.append("[")
+
+        for (i in 0 until totalBlocks) {
+            if (i < filledBlocks) {
+                progressBar.append("■")
+            } else {
+                progressBar.append("□")
+            }
+
+            if (i < totalBlocks - 1) {
+                progressBar.append(" ")
+            }
+        }
+
+
+        progressBar.append("] $validPercentage%")
+
+        return progressBar.toString()
+    }
+
 }
 
 

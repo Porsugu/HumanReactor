@@ -6,9 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".PoseDetectionActivity">
 
-    <!-- Button layer -->
 
-    <!-- 相機預覽容器 -->
     <androidx.camera.view.PreviewView
         android:id="@+id/preview_view"
         android:layout_width="match_parent"
@@ -16,7 +14,6 @@
 
     </androidx.camera.view.PreviewView>
 
-    <!-- 姿態檢測覆蓋層 -->
     <SurfaceView
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
@@ -28,22 +25,47 @@
         android:layout_height="match_parent">
 
 
-        <TextView
-            android:id="@+id/tips"
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
-            android:layout_marginEnd="50dp"
-            android:background="#44474747"
-            android:text="tips"
-            android:textAlignment="center"
-            android:textColor="#FFFFFF"
-            android:textSize="34sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/msgWindow"
+            android:layout_width="wrap_content"
+            android:layout_height="150dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/big_frame_wbg"
+            app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/tips"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:text="tips"
+                android:textAlignment="center"
+                android:textColor="#FFFFFF"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/progressBar2"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_marginBottom="50dp"
+                android:text="██████████"
+                android:textAlignment="center"
+                android:textColor="@color/fat_orange"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <View
             android:id="@+id/color_bar"
@@ -51,54 +73,117 @@
             android:layout_height="50dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <HorizontalScrollView
-            android:id="@+id/button_scroll_container"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:background="#B0B0B0"
-            android:padding="16dp"
-            android:scrollbars="none"
+            android:layout_height="70dp"
+            android:background="#A02B2B2B"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
-            <LinearLayout
-                android:id="@+id/button_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/allBTN"
+                android:layout_width="230dp"
+                android:layout_height="50dp"
+                android:background="#00911704"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/rightBTN"
+                app:layout_constraintStart_toEndOf="@+id/leftBTN"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <!-- Buttons will be added here programmatically -->
+                <ImageView
+                    android:id="@+id/allBTN_icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@android:drawable/ic_menu_add" />
 
-                <Button
-                    android:id="@+id/add_move"
+                <TextView
+                    android:id="@+id/allBTN_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Add move" />
+                    android:text="Add Moves"
+                    android:textColor="@color/text"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/allBTN_icon"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-                <Button
-                    android:id="@+id/collectAllMove"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Collect Move data" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <Button
-                    android:id="@+id/trainAllMove"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Train AI model" />
+            <RelativeLayout
+                android:id="@+id/leftBTN"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <Button
-                    android:id="@+id/reaction"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Reaction Test" />
-            </LinearLayout>
-        </HorizontalScrollView>
+                <ImageView
+                    android:id="@+id/leftBTN_Icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:rotation="270"
+                    app:srcCompat="@android:drawable/ic_menu_upload" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/leftBTN_Cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#4D7A7A7A"
+                    android:visibility="invisible">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rightBTN"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/rightBTN_Icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:rotation="90"
+                    app:srcCompat="@android:drawable/ic_menu_upload" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/rightBTN_Cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#4D7A7A7A"
+                    android:visibility="invisible">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </RelativeLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/correctSignText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/kodemono_regular"
+            android:text="✓"
+            android:textColor="#FFFFFF"
+            android:textSize="150sp"
+            app:layout_constraintEnd_toEndOf="@+id/msgWindow"
+            app:layout_constraintStart_toStartOf="@+id/msgWindow"
+            app:layout_constraintTop_toBottomOf="@+id/color_bar" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
