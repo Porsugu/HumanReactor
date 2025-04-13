@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HumanReactor" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <!-- other theme font -->
+        <item name="android:fontFamily">@font/ibmplexmono_regular</item>
+    </style>
+</resources>
