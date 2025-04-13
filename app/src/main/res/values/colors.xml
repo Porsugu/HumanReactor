@@ -9,4 +9,7 @@
     <color name="text">#B1AFAF</color>
     <color name="green">#4CAF50</color>
     <color name="red">#F44336</color>
+    <color name="background_black">#242424</color>
+    <color name="block_divider_black">#1f1f1f</color>
+    <color name="block_option_transparent">#66363636</color>
 </resources>

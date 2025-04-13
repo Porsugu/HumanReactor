@@ -42,6 +42,9 @@
             android:name=".aiQuestion.AI_answer_result"
             android:exported="false" />
         <activity
+            android:name=".QuickThinkerActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
