@@ -67,9 +67,12 @@ dependencies {
 
     // ML Kit for pose detection
     implementation("com.google.mlkit:pose-detection:18.0.0-beta3")
+    implementation ("com.google.mlkit:pose-detection-accurate:18.0.0-beta3")
 
-    //Smile
-    implementation ("com.github.haifengl:smile-core:2.6.0")
+    // Coil 核心库
+    implementation ("io.coil-kt:coil:2.5.0")
+// Coil GIF 支持
+    implementation ("io.coil-kt:coil-gif:2.5.0")
 
     //progress bar material
     implementation ("com.google.android.material:material:1.10.0")
