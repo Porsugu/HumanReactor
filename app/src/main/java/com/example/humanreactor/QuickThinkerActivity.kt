@@ -1,11 +1,14 @@
 package com.example.humanreactor
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.example.humanreactor.QuickThinker.QuickThinkerQuestionType
+import com.example.humanreactor.QuickThinker.SharedPrefManager
 
 class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
 
@@ -14,6 +17,7 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
     private lateinit var japanse_btn: ConstraintLayout
     private lateinit var next_btn: ConstraintLayout
     private var selectedOption: ConstraintLayout? = null
+    private lateinit var sharedPrefManager: SharedPrefManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +34,8 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
         chinese_btn.setOnClickListener(this)
         japanse_btn.setOnClickListener(this)
 
+        sharedPrefManager = SharedPrefManager(this)
+
 
         // set click listener for next button
         next_btn.setOnClickListener {
@@ -38,8 +44,9 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
                 // handle the next action
                 val selectedOptionText = when (selectedOption) {
                     english_btn -> "english"
-                    chinese_btn -> "chinese"
-                    japanse_btn -> "japanese"
+                    // will open it later
+//                    chinese_btn -> "chinese"
+//                    japanse_btn -> "japanese"
                     else -> ""
                 }
 
@@ -49,7 +56,11 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
                     Toast.LENGTH_SHORT
                 ).show()
 
+                sharedPrefManager.saveLanguage(selectedOptionText)
+
                 // if it is clicked,  go to the next class, the option class
+                val intent = Intent(this, QuickThinkerQuestionType::class.java)
+                startActivity(intent)
 
             }
 

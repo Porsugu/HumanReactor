@@ -45,6 +45,12 @@
             android:name=".QuickThinkerActivity"
             android:exported="false" />
         <activity
+            android:name=".QuickThinker.QuickThinkerQuestionType"
+            android:exported="false" />
+        <activity
+            android:name=".QuickThinker.LoadingActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

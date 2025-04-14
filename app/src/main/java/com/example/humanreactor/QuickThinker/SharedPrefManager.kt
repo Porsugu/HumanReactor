@@ -1,7 +1,6 @@
-package com.example.humanreactor.AI_Question
+package com.example.humanreactor.QuickThinker
 
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 
 
@@ -17,7 +16,7 @@ class SharedPrefManager (context: Context){
     val categorySharePref : SharedPreferences = context.getSharedPreferences("category_pref", Context.MODE_PRIVATE)
 
     // save and get the language
-    fun saveLanguage(language : String){ languageSharePred.edit().putString("langauge", language).apply() }
+    fun saveLanguage(language : String){ languageSharePred.edit().putString("language", language).apply() }
 
     fun getLanguage(): String? { return languageSharePred.getString("language", "") }
 
