@@ -1,16 +1,26 @@
 package com.example.humanreactor
 import android.Manifest
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +32,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.text.buildSpannedString
+import androidx.core.text.color
 import androidx.core.view.isInvisible
 import com.example.humanreactor.AI_Model.LightweightTreeClassifier
 
@@ -29,6 +41,7 @@ import com.example.humanreactor.customizedMove.Move
 import com.example.humanreactor.customizedMove.MoveDialogManager
 import com.example.humanreactor.customizedMove.NormalizedSample
 import com.example.humanreactor.databases.ActionDatabaseHelper
+import com.example.humanreactor.databases.Performance
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
@@ -71,7 +84,24 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var poseDetector: PoseDetector
     private lateinit var surfaceView: SurfaceView
     private lateinit var previewView: androidx.camera.view.PreviewView
-    private lateinit var textViewStatus: TextView
+//    private lateinit var textViewStatus: TextView
+
+    //For Terminal
+    private var strStart = "sys C/User/>"
+    private var terminalStr  = "Human Reactor PowerShell\n" +
+            "Copyright (C) Porsugu & Lemmonie. All rights reserved.\n\n" +
+            "The accuracy of the test might be vary due to your environment.\n\n" +strStart
+    private var terminalSpannable: SpannableStringBuilder = SpannableStringBuilder("")
+    private lateinit var InfoCover:ConstraintLayout
+    private lateinit var terminalScroll:ScrollView
+    private lateinit var terminalTxt: TextView
+    private var isAdded = false
+    private var isSampled = false
+    private var isTrained = false
+    private var isTested = false
+    private var isSaved = false
+
+
 
     //For unite btn
     private lateinit var leftBTN: RelativeLayout
@@ -81,12 +111,12 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var allBTN_Text: TextView
     private var START_PAGE: Int = 0
     private var current_page:Int = 0
-    private var END_PAGE: Int = 4
+    private var END_PAGE: Int = 5
 
     //For add user move
     private val usedColors = mutableSetOf<Int>()
     private val moves = mutableListOf<Move>()
-    private var categoryId = mutableSetOf<Int>()
+
     private lateinit var moveDialogManager: MoveDialogManager
 
     //For Collecting
@@ -94,22 +124,32 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var tips: TextView
     private var ref:Int = 0
     private var fac:Float = 0f
-//    private lateinit var progressBar: ProgressBar
     private lateinit var progressBar: TextView
     private lateinit var msgWindow:ConstraintLayout
 
     //For training
-    private var isTrained = false
     private lateinit var classifier: LightweightTreeClassifier
+//    private lateinit var classifier: GradientBoostingClassifier
+    private var trainPause = 50L
+    private var trainMsg = ""
+    private var acc:Double = 0.0
+    private var avg_Time = 0.0
 
     //For reaction
     private lateinit var correctIcon: TextView
+    private var testMsg = ""
+
+    //For save
+    private var categoryId = mutableSetOf<Int>()
+
+
 
     // Stores the latest detected pose data
     private var currentPose: Pose? = null
 
     //Switch tips display for user and developer
     private var isDevelop = false
+
 
     // Drawing tools
     private val paint = Paint().apply {
@@ -137,12 +177,13 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         // Request camera permissions
         if (allPermissionsGranted()) {
-            startCamera()
+//            startCamera()
         } else {
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
+        stopCamera()
 
         val options = AccuratePoseDetectorOptions.Builder()
             .setDetectorMode(AccuratePoseDetectorOptions.STREAM_MODE)
@@ -150,20 +191,29 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         poseDetector = PoseDetection.getClient(options)
 
+
         // Initialize camera executor
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        //For Terminal
+        InfoCover = findViewById(R.id.InfoCover)
+        terminalScroll = findViewById(R.id.termimnalScroll)
+        terminalTxt = findViewById(R.id.terMsgText)
+//        terminalTxt.typeface = Typeface.MONOSPACE
+        terminalSpannable.append(terminalStr)
+        terminalTxt.text = terminalStr
+
         //for add moves
         moveDialogManager = MoveDialogManager(this, dbHelper, moves, usedColors,categoryId)
-        colorBar = findViewById(R.id.color_bar)
 
-//        tips.isInvisible = true
+        colorBar = findViewById(R.id.color_bar)
 
         //for sampling and training
         progressBar = findViewById(R.id.progressBar2)
         msgWindow = findViewById(R.id.msgWindow)
         msgWindow.visibility = View.INVISIBLE
         tips = findViewById(R.id.tips)
+
 
         //for reaction
         correctIcon = findViewById(R.id.correctSignText)
@@ -199,24 +249,50 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             setAllBTN(current_page)
         }
 
+        moveDialogManager.setOnDialogDismissListener(object : MoveDialogManager.OnDialogDismissListener {
+            override fun onDialogDismissed() {
+                if(moves.size > 1 ){
+                    isAdded = true
+                }
+                else{
+                    isAdded = false
+                }
+                isSampled = false
+                isTrained = false
+                isTested = false
+                isSaved = false
+                terminalTxtUpdate("add", isAdded, "Please add at least 2 moves!")
+
+            }
+        })
 
         allBTN = findViewById(R.id.allBTN)
         allBTN.background = ContextCompat.getDrawable(this, R.drawable.btn_background)
         allBTN.setOnClickListener {
             if(current_page == 0){
+                terminalTxtUpdateStart("Add...")
                 moveDialogManager.showMoveManagementDialog()
-                Log.d("categoryID", "categoryID: ${categoryId}")
             }
             else if(current_page == 1){
+                terminalTxtUpdateStart("Sampling...")
                 collectAllMoveSample(5, 3000)
             }
             else if(current_page == 2){
+                terminalTxtUpdateStart("Train AI Model...")
                 processAndTrainModel()
+
             }
             else if(current_page == 3){
+                terminalTxtUpdateStart("Reaction Test...")
                 testReaction(10)
             }
+            else if(current_page == 4){
+                terminalTxtUpdateStart("Save Performance...")
+                confirmSave()
+            }
         }
+
+
     }
 
     //for unite btn
@@ -236,13 +312,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             android.R.drawable.ic_menu_camera,
             android.R.drawable.ic_menu_edit,
             android.R.drawable.ic_menu_compass,
+            android.R.drawable.ic_menu_save
         )
 
         val texts = listOf(
             "Add Moves",
             "Sampling",
             "Train AI",
-            "Reaction!!"
+            "Reaction!!",
+            "Save"
         )
         allBTN_Icon.setImageResource(icons[current_page])
         allBTN_Text.text = texts[current_page]
@@ -252,23 +330,28 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     //For collecting move samples
     private fun collectAllMoveSample(secondsForEachMove: Int, samplesForEachMove: Int) {
-        if(moves.size == 0){
+        isSampled = false
+        if(moves.size < 2){
             CoroutineScope(Dispatchers.Main).launch {
 //                tips.isInvisible = false
                 msgWindow.visibility = View.VISIBLE
                 progressBar.visibility = View.INVISIBLE
-                tips.text = "Please add at least 1 move first!!!!"
+                tips.text = "Please add at least 2 moves first."
                 delay(2000)
 //                tips.isInvisible = true
                 msgWindow.visibility = View.INVISIBLE
+                terminalTxtUpdate("sample", isSampled,"Please add at least 2 moves first.")
             }
+
             return
         }
 
         resetAllMoveSamples()
 
         CoroutineScope(Dispatchers.Main).launch {
-//            startCamera()
+            delay(500)
+            startCamera()
+            InfoCover.visibility = View.INVISIBLE
             msgWindow.visibility = View.VISIBLE
             progressBar.visibility = View.VISIBLE
 
@@ -347,7 +430,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                         samplesCollected++
 
                         // Update progress in UI
-                        tips.text = "Hold your move!\nCollecting: $samplesCollected/$samplesForEachMove"
+//                        tips.text = "Hold your move!\nCollecting: $samplesCollected/$samplesForEachMove"
+                        tips.text = "Hold your move!\n$samplesCollected/$samplesForEachMove"
                         // Update progress bar
                         val currentMoveBaseProgress = setupProgress + (moveIndex * progressPerMove)
                         val currentProgress = currentMoveBaseProgress + (samplesCollected * progressPerSample).toInt()
@@ -395,7 +479,10 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
             msgWindow.visibility = View.INVISIBLE
             enableAllBtn()
-//            stopCamera()
+            stopCamera()
+            InfoCover.visibility = View.VISIBLE
+            isSampled = true
+            terminalTxtUpdate("sample", isSampled)
         }
     }
 
@@ -421,7 +508,9 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     //For training
     private fun processAndTrainModel() {
+        var result:String = ""
         CoroutineScope(Dispatchers.Main).launch {
+            isTrained = false
             msgWindow.visibility = View.VISIBLE
             progressBar.visibility = View.VISIBLE
 
@@ -431,16 +520,19 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 trainModel()
             } catch (e: Exception) {
                 Log.e("ProcessAndTrain", "Error during processing or training", e)
-                tips.text = "Error: ${e.message}"
-                delay(3000)
+//                result = "Error during processing or training"
+//                terminalTxtUpdate("train",isTrained, trainMsg)
+//                tips.text = "Error: ${e.message}"
+//                delay(3000)
                 tips.isInvisible = true
             }
             enableAllBtn()
-            isTrained = true
             msgWindow.visibility = View.INVISIBLE
+            terminalTxtUpdate("train",isTrained, trainMsg)
         }
 
     }
+
 
     private suspend fun normalizeData() {
 //        progressBar.progress = 0
@@ -990,19 +1082,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 //                progressBar.progress = 10
             for (i in 1..10) {
                 progressBar.text = progressBarStr(i)
-                delay(200)
+                delay(trainPause)
             }
 //            progressBar.text = progressBarStr(10)
             val totalSamples = moves.sumOf { it.normalizedSamples.size }
             if (totalSamples == 0) {
-                if(isDevelop){
-                    tips.text = "Cannot train classifier: No normalized samples available"
-                }
-                else{
-                    tips.text = "Fail to load: Please make sure that your upper body is in the screen."
-                }
+                tips.text = "Cannot train classifier: No normalized samples available"
 
-                delay(1000)
+                trainMsg = "No normalized data available."
+                delay(trainPause)
                 tips.isInvisible = true
                 progressBar.isInvisible = true
                 enableAllBtn()
@@ -1020,7 +1108,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             progressBar.text = progressBarStr(20)
             for (i in 10..20) {
                 progressBar.text = progressBarStr(i)
-                delay(200)
+                delay(trainPause)
             }
 //            delay(500)
 
@@ -1032,13 +1120,14 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 //            progressBar.text = progressBarStr(50)
             for (i in 20..50) {
                 progressBar.text = progressBarStr(i)
-                delay(200)
+                delay(trainPause)
             }
 //            delay(500)
             // Initialize classifier
 //                classifier = RuleBasedClassifier()
 //                classifier = ImprovedRuleBasedClassifier()
             classifier = LightweightTreeClassifier()
+//            classifier = GradientBoostingClassifier()
             if (isDevelop){
                 tips.text = "Processing feature ranges for each move..."
             }
@@ -1056,7 +1145,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
             for (i in 50..100) {
                 progressBar.text = progressBarStr(i)
-                delay(200)
+                delay(trainPause)
             }
 //            progressBar.text = progressBarStr(80)
 //            delay(500)
@@ -1073,12 +1162,14 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 else{
                     tips.text = "Train success!"
                 }
+                isTrained = true
             } else {
                 if(isDevelop){
                     tips.text = "Classifier training failed. Please try again."
                 }
                 else{
                     tips.text = "Train failed."
+                    trainMsg = "Low sampling quality."
                 }
             }
 
@@ -1087,11 +1178,12 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         } catch (e: Exception) {
             Log.e("ModelTraining", "Error during classifier training", e)
             tips.text = "Training error: ${e.message}"
+            trainMsg = "${e.message}"
             delay(1000)
 
         }
+
         enableAllBtn()
-        isTrained = true
     }
 
     /**
@@ -1099,15 +1191,21 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
      */
     private fun testReaction(numTest: Int) {
         if (!::classifier.isInitialized || !classifier.isTrained() || !isTrained) {
-            Toast.makeText(this, "Please train the classifier first", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, "Please train the classifier first", Toast.LENGTH_SHORT).show()
+            testMsg = "The AI model is not trained."
+            terminalTxtUpdate("test", isTested,testMsg)
             return
         }
 
         // Define constants
         val UNKNOWN_ACTION = "unknown"
-        val CONFIDENCE_THRESHOLD = classifier.getConfidenceThreshold()
+//        val CONFIDENCE_THRESHOLD = classifier.getConfidenceThreshold()
 
         CoroutineScope(Dispatchers.Main).launch {
+            delay(1000)
+            startCamera()
+            InfoCover.visibility = View.INVISIBLE
+            isSaved = false
             msgWindow.visibility = View.VISIBLE
             progressBar.visibility = View.INVISIBLE
             disableAllBtn()
@@ -1207,8 +1305,8 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                                         val confidencePercent = (currentConfidence * 100).toInt()
                                         if (isDevelop){
                                             tips.text = "Target: ${currentMove.name}\n" +
-                                                    "Current: $currentPrediction ($confidencePercent%)\n" +
-                                                    "Threshold: ${(CONFIDENCE_THRESHOLD * 100).toInt()}%"
+                                                    "Current: $currentPrediction ($confidencePercent%)\n"
+//                                                    "Threshold: ${(CONFIDENCE_THRESHOLD * 100).toInt()}%"
                                         }
                                         else{
                                             tips.text = "Target: ${currentMove.name}\n Current: $currentPrediction"
@@ -1217,13 +1315,13 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                                         lastUpdateTime = currentTime
 
                                         // Use color to indicate confidence
-                                        if(isDevelop){
-                                            when {
-                                                currentConfidence < 0.5f -> tips.setTextColor(Color.RED)
-                                                currentConfidence < CONFIDENCE_THRESHOLD -> tips.setTextColor(Color.YELLOW)
-                                                else -> tips.setTextColor(Color.GREEN)
-                                            }
-                                        }
+//                                        if(isDevelop){
+//                                            when {
+//                                                currentConfidence < 0.5f -> tips.setTextColor(Color.RED)
+//                                                currentConfidence < CONFIDENCE_THRESHOLD -> tips.setTextColor(Color.YELLOW)
+//                                                else -> tips.setTextColor(Color.GREEN)
+//                                            }
+//                                        }
 
                                     }
 
@@ -1242,7 +1340,9 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                                         REQUIRED_CONSENSUS
                                     )
 
-                                    if (result.first != UNKNOWN_ACTION && result.second >= CONFIDENCE_THRESHOLD) {
+//                                            && result.second >= CONFIDENCE_THRESHOLD
+                                    if (result.first != UNKNOWN_ACTION) {
+
                                         detectedMove = result.first
                                         confidence = result.second
                                         endTime = System.currentTimeMillis()
@@ -1294,9 +1394,11 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                                 correctIcon.text = "✗"
                                 correctIcon.isInvisible = false
                                 correctIcon.setTextColor(Color.RED)
+//                                tips.text = "Incorrect! You did '${detectedMove} " +
+//                                        "instead of '${currentMove.name}'\n" +
+//                                        "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
                                 tips.text = "Incorrect! You did '${detectedMove} " +
-                                        "instead of '${currentMove.name}'\n" +
-                                        "Reaction time: ${String.format("%.2f", reactionTime/1000.0)}s"
+                                        "instead of '${currentMove.name}'\n"
                             }
                         }
                     } else {
@@ -1319,7 +1421,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                     // Clearly indicate to user that this test is complete
                     if(i+1 < numTest){
-                        tips.text = "Test ${i+1}/${numTest} completed. Get ready for next test..."
+                        tips.text = "Test ${i+1}/${numTest} completed."
                     }
                     else{
                         tips.text = "All ${i+1} tests completed."
@@ -1334,9 +1436,14 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 val accuracy = if (numTest > 0) correctCount.toFloat() / numTest else 0f
                 val avgReactionTime = if (reactionTimes.isNotEmpty())
                     reactionTimes.average() / 1000.0 else 0.0
+                //save to global
+                acc = accuracy.toDouble()
+                avg_Time = avgReactionTime
 
-                tips.text = "Test complete!\n" +
-                        "Accuracy: ${(accuracy * 100).toInt()}% ($correctCount/$numTest)\n" +
+//                tips.text = "Test complete!\n" +
+//                        "Accuracy: ${(accuracy * 100).toInt()}% ($correctCount/$numTest)\n" +
+//                        "Average reaction time: ${String.format("%.2f", avgReactionTime)}s"
+                tips.text = "Accuracy: ${(accuracy * 100).toInt()}%" +
                         "Average reaction time: ${String.format("%.2f", avgReactionTime)}s"
 
                 // Hide tips after showing results
@@ -1350,11 +1457,102 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 //                tips.isInvisible = true
             }
             correctIcon.isInvisible = true
+//            stopCamera()
             enableAllBtn()
             correctIcon.setTextColor(Color.WHITE)
             msgWindow.visibility = View.INVISIBLE
+            InfoCover.visibility = View.VISIBLE
+            isTested = true
+            stopCamera()
+            terminalTxtUpdate("test",isTested)
         }
     }
+
+    private fun confirmSave() {
+        try {
+            var msg = ""
+            var accTxt = String.format("%.0f", acc * 100.0)+"%"
+            var responseTimeTxt = String.format("%.4g", avg_Time)
+
+            if (categoryId.isNotEmpty()) {
+                val firstCategoryId = categoryId.first()
+
+                val categories = dbHelper.getAllCategories()
+                val categoryName = categories.find { it.id == firstCategoryId }?.name ?: "Unknown"
+
+
+                if (!isTested) {
+                    accTxt = "N/A"
+                    responseTimeTxt = "N/A"
+                }
+
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle("Save Performance Data")
+
+                val message = StringBuilder()
+                    .append("Category: $categoryName\n")
+                    .append("Accuracy: $accTxt\n")
+                    .append("Avg Reaction Time: $responseTimeTxt s")
+                    .toString()
+
+                builder.setMessage(message)
+
+                builder.setPositiveButton("Save") { dialog, _ ->
+                    if (!isTested) {
+                        terminalTxtUpdate("save", false, "No valid data.")
+                        dialog.dismiss()
+                        return@setPositiveButton
+                    } else if (isSaved) {
+                        terminalTxtUpdate("save", false, "Already saved!")
+                        dialog.dismiss()
+                        return@setPositiveButton
+                    }
+
+                    try {
+                        val performance = Performance(
+                            categoryId = firstCategoryId,
+                            avgResponseTime = avg_Time,
+                            accuracy = acc.toDouble()
+                        )
+
+                        val result = dbHelper.addOrUpdatePerformance(performance)
+
+                        if (result != -1L) {
+                            isSaved = true
+                            msg = "Success to save into the database."
+                        } else {
+                            msg = "Failed to save into the database."
+                        }
+
+                        terminalTxtUpdate("save", true, msg)
+                    } catch (e: Exception) {
+                        Log.e("ConfirmSave", "Error saving data: ${e.message}", e)
+                        terminalTxtUpdate("save", false, "Error: ${e.message}")
+                    }
+
+                    dialog.dismiss()
+                }
+
+                // 添加"取消"按钮
+                builder.setNegativeButton("Cancel") { dialog, _ ->
+                    terminalTxtUpdate("save", false, "Canceled by user.")
+                    dialog.dismiss()
+                }
+
+                // 显示对话框
+                builder.create().show()
+            } else {
+                // 处理categoryId为空的情况
+                terminalTxtUpdate("save", false, "No category ID available.")
+            }
+        } catch (e: Exception) {
+            // 捕获任何可能的异常
+            Log.e("ConfirmSave", "Unexpected error: ${e.message}", e)
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
 
     fun disableAllBtn(){
         leftBTN.isEnabled = false
@@ -1578,7 +1776,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
-                textViewStatus.text = "Camera permission is required to run this app"
+//                textViewStatus.text = "Camera permission is required to run this app"
             }
         }
     }
@@ -1653,6 +1851,95 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         progressBar.append("] $validPercentage%")
 
         return progressBar.toString()
+    }
+
+    fun terminalTxtUpdateStart(type: String){
+//        terminalStr += " ${type}\n" + strStart
+//        terminalTxt.text = terminalStr
+
+        terminalSpannable.append(" ${type}\n$strStart")
+        terminalTxt.text = terminalSpannable
+        terminalScroll.post {
+            terminalScroll.fullScroll(View.FOCUS_DOWN)
+        }
+    }
+
+    fun terminalTxtUpdate(type: String, success: Boolean, extra:String = ""){
+
+        if(type == "add"){
+            if(success){
+                terminalSpannable.append(" Update success!\n\n$strStart")
+//                terminalStr += " Update success!\n\n"+strStart
+            }
+            else{
+                terminalSpannable.append(" Failed! ${extra}\n\n$strStart")
+//                terminalStr += " Failed! ${extra}\n\n"+strStart
+            }
+        }
+        else if(type == "sample"){
+            if(success){
+                terminalSpannable.append(" Sampling success!\n\n$strStart")
+//                terminalStr += " Sampling success!\n\n"+strStart
+            }
+            else{
+                terminalSpannable.append(" Failed! Please add moves first!\n\n$strStart")
+//                terminalStr += " Failed! Please add moves first!\n\n"+strStart
+            }
+        }
+        else if(type == "train"){
+            if (success){
+                terminalSpannable.append(" AI Training success!\n\n$strStart")
+//                terminalStr += " AI Training success!\n\n"+strStart
+            }
+            else{
+                terminalSpannable.append(" Failed! ${trainMsg}\n\n$strStart")
+//                terminalStr += " Failed! ${trainMsg}\n\n"+strStart
+            }
+        }
+        else if(type == "test"){
+            if(success){
+                val color = ContextCompat.getColor(this, R.color.fat_orange)
+                val table = buildSpannedString {
+                    append(" Result:")
+                    append("\nAccuracy: ")
+                    color(color) {
+                        append(progressBarStr((acc * 100.0).toInt(), 5))
+                    }
+                    append("\nAvg reaction time: ")
+                    color(color) {
+                        append(String.format("%.4g", avg_Time))
+                    }
+                    append("\n\n")
+                    append(strStart)
+                }
+                terminalSpannable.append(table)
+//                terminalStr = spannedString.toString()+strStart
+            }
+            else{
+                terminalSpannable.append(" Failed! ${extra}\n\n$strStart")
+//                terminalStr += " Failed! ${extra}\n\n"+strStart
+            }
+
+        }
+        else if(type == "save"){
+            if(success){
+                terminalSpannable.append(" Save success.\n\n$strStart")
+//                terminalStr = spannedString.toString()+strStart
+            }
+            else{
+                terminalSpannable.append(" Failed! ${extra}\n\n$strStart")
+//                terminalStr += " Failed! ${extra}\n\n"+strStart
+            }
+
+        }
+        else{
+
+        }
+        terminalTxt.text = terminalSpannable
+        terminalScroll.post {
+            terminalScroll.fullScroll(View.FOCUS_DOWN)
+        }
+
     }
 
 }

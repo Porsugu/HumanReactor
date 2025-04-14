@@ -4,21 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="5dp"
     tools:context=".PoseDetectionActivity">
 
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        <androidx.camera.view.PreviewView
+            android:id="@+id/preview_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
 
-    </androidx.camera.view.PreviewView>
+        </androidx.camera.view.PreviewView>
 
-    <SurfaceView
-        android:id="@+id/surface_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent" />
+        <SurfaceView
+            android:id="@+id/surface_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -26,12 +27,92 @@
 
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/InfoCover"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#242424"
+            app:layout_constraintBottom_toTopOf="@+id/btmBar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/color_bar">
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#1F1F1F"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/textView8"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="AI Reaction Train"
+                    android:textAlignment="center"
+                    android:textColor="@color/fat_orange"
+                    android:textSize="24sp" />
+
+                <View
+                    android:id="@+id/view"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_margin="10dp"
+                    android:background="@color/fat_orange" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/termimnalScroll"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/terMsgText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:text=">Human Reactor PowerShell\n"
+                        android:textColor="@color/text"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </ScrollView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/correctSignText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/kodemono_regular"
+            android:text="✓"
+            android:textColor="#FFFFFF"
+            android:textSize="150sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/msgWindow"
+            app:layout_constraintStart_toStartOf="@+id/msgWindow"
+            app:layout_constraintTop_toBottomOf="@+id/color_bar" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/msgWindow"
             android:layout_width="wrap_content"
             android:layout_height="150dp"
             android:layout_marginBottom="20dp"
             android:background="@drawable/big_frame_wbg"
-            app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/btmBar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
@@ -76,7 +157,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout"
+            android:id="@+id/btmBar"
             android:layout_width="match_parent"
             android:layout_height="70dp"
             android:background="#A02B2B2B"
@@ -170,20 +251,13 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </RelativeLayout>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/correctSignText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:fontFamily="@font/kodemono_regular"
-            android:text="✓"
-            android:textColor="#FFFFFF"
-            android:textSize="150sp"
-            app:layout_constraintEnd_toEndOf="@+id/msgWindow"
-            app:layout_constraintStart_toStartOf="@+id/msgWindow"
-            app:layout_constraintTop_toBottomOf="@+id/color_bar" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

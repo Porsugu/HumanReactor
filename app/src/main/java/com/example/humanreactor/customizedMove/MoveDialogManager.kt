@@ -36,6 +36,16 @@ class MoveDialogManager(
     var selectedCategoryId: Int = -1
     private var selectedCategoryName: String = ""
 
+    interface OnDialogDismissListener {
+        fun onDialogDismissed()
+    }
+
+    private var dismissListener: OnDialogDismissListener? = null
+
+    fun setOnDialogDismissListener(listener: OnDialogDismissListener) {
+        this.dismissListener = listener
+    }
+
     // Show the main dialog
     @SuppressLint("NotifyDataSetChanged")
     fun showMoveManagementDialog() {
@@ -50,6 +60,10 @@ class MoveDialogManager(
                 .setCancelable(true)
                 .create()
             dialog.window?.setBackgroundDrawableResource(R.drawable.big_frame_wbg)
+
+            dialog.setOnDismissListener {
+                dismissListener?.onDialogDismissed()
+            }
 
             // Find view elements
             val tabLayout = dialogView.findViewById<TabLayout>(R.id.tabLayout)
@@ -231,17 +245,30 @@ class MoveDialogManager(
             // Get all categories from database
             categories = dbHelper.getAllCategories()
 
-            if (categories.isNotEmpty()) {
-                if (selectedCategoryId == -1 || !categories.any { it.id == selectedCategoryId }) {
-                    selectedCategoryId = categories.first().id
-                    selectedCategoryName = categories.first().name
-
-//                    loadSelectedMovesToExternal()
-                    syncExternalCollections()
-                }
-            } else {
+//            if (categories.isNotEmpty()) {
+//                if (selectedCategoryId == -1 || !categories.any { it.id == selectedCategoryId }) {
+//                    selectedCategoryId = categories.first().id
+//                    selectedCategoryName = categories.first().name
+//
+////                    loadSelectedMovesToExternal()
+//                    syncExternalCollections()
+//                }
+//                if (selectedCategoryId == -1 || !categories.any { it.id == selectedCategoryId }) {
+//                    selectedCategoryId = categories.first().id
+//                    selectedCategoryName = categories.first().name
+//
+////                    loadSelectedMovesToExternal()
+//                    syncExternalCollections()
+//                }
+//            } else {
+//                selectedCategoryId = -1
+//                selectedCategoryName = ""
+//            }
+            if (selectedCategoryId != -1 && !categories.any { it.id == selectedCategoryId }) {
+                // If the selected category was deleted, reset selection
                 selectedCategoryId = -1
                 selectedCategoryName = ""
+                syncExternalCollections() // Clear external collections
             }
 
             // Load actions for each category
@@ -410,9 +437,9 @@ class MoveDialogManager(
                         // Refresh category list
                         loadCategories(tabView)
 
-                        // Automatically select new category
-                        selectedCategoryId = categoryId.toInt()
-                        selectedCategoryName = name
+//                        // Automatically select new category
+//                        selectedCategoryId = categoryId.toInt()
+//                        selectedCategoryName = name
                     } else {
                         Toast.makeText(context, "Failed to add category", Toast.LENGTH_SHORT).show()
                     }
@@ -970,6 +997,8 @@ class MoveDialogManager(
             else -> throw IndexOutOfBoundsException("Invalid tab index")
         }
     }
+
+
 
     // Modified CategoryAdapter implementation
     inner class CategoryAdapter(
