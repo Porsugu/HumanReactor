@@ -6,6 +6,8 @@
         <item name="colorPrimary">@color/main</item>
         <item name="colorOnPrimary">@color/white</item>
 
+        <item name="android:fontFamily">@font/ibmplexmono_regular</item>
+
     </style>
     <style name="Theme.HumanReactor" parent="Base.Theme.HumanReactor" />
 </resources>

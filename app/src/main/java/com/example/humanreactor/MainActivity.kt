@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         }
         goAIQuestionActivityButton.foreground = ContextCompat.getDrawable(this, R.drawable.menu_big_selector)
         goAIQuestionActivityButton.setOnClickListener {
-            val intent = Intent(this, AIQuestionActivity::class.java)
+            val intent = Intent(this, QuickThinkerActivity::class.java)
             startActivity(intent)
         }
         statButton.foreground = ContextCompat.getDrawable(this, R.drawable.menu_big_selector)
