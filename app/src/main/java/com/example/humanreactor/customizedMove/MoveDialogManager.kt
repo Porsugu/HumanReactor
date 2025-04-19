@@ -59,7 +59,7 @@ class MoveDialogManager(
                 .setView(dialogView)
                 .setCancelable(true)
                 .create()
-            dialog.window?.setBackgroundDrawableResource(R.drawable.big_frame_wbg)
+            dialog.window?.setBackgroundDrawableResource(R.drawable.msg_window_bg)
 
             dialog.setOnDismissListener {
                 dismissListener?.onDialogDismissed()
