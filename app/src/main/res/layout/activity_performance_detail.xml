@@ -33,9 +33,9 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Response Time (ms)"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp"
+            android:text="Reaction Time (ms)"
+            android:textSize="16sp" />
 
         <FrameLayout
             android:id="@+id/frame_response_time"
@@ -71,7 +71,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Back"/>
+            android:text="Back"
+            android:textColor="@color/main"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
 
         <Button
             android:id="@+id/btn_add_test_data"
@@ -79,7 +81,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Add Test Data"/>
+            android:text="Add Test Data"
+            android:textColor="@color/main"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
     </LinearLayout>
 
 </LinearLayout>

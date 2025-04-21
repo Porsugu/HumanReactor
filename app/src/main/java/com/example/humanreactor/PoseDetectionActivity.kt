@@ -283,7 +283,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
             }
             else if(current_page == 1){
                 terminalTxtUpdateStart("Sampling...")
-                collectAllMoveSample(5, 3000)
+                collectAllMoveSample(5, 5000)
             }
             else if(current_page == 2){
                 terminalTxtUpdateStart("Train AI Model...")

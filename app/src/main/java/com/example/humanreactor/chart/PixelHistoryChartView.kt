@@ -147,7 +147,7 @@ class PixelHistoryChartView @JvmOverloads constructor(
 
     private val paint = Paint()
     private val textPaint = Paint().apply {
-        color = Color.BLACK
+        color = Color.parseColor("#FFF8F0")
         textSize = 25f
         textAlign = Paint.Align.CENTER
     }
@@ -156,7 +156,7 @@ class PixelHistoryChartView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
     private val backgroundPaint = Paint().apply {
-        color = Color.WHITE
+//        color = Color.WHITE
         color = Color.parseColor("#66363636")
     }
 
@@ -234,7 +234,7 @@ class PixelHistoryChartView @JvmOverloads constructor(
                 textY + textBounds.top - padding,
                 textX + textBounds.width() / 2f + padding,
                 textY + textBounds.bottom + padding,
-                8f, 8f, // 圆角大小
+                8f, 8f,
                 textBackgroundPaint
             )
 
@@ -314,11 +314,10 @@ class PixelHistoryChartView @JvmOverloads constructor(
             textY + bounds.top - padding,
             textX + bounds.width() / 2f + padding,
             textY + bounds.bottom + padding,
-            12f, 12f, // 圆角大小
+            12f, 12f,
             textBackgroundPaint
         )
 
-        // 绘制文本
         canvas.drawText(
             message,
             textX,

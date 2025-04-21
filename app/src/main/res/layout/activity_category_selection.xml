@@ -27,6 +27,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Confirm"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp"
+        android:textColor="@color/main"
+        style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
 
 </LinearLayout>
