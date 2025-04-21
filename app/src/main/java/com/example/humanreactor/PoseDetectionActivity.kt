@@ -1458,8 +1458,10 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
                 // Calculate final statistics
                 val accuracy = if (numTest > 0) correctCount.toFloat() / numTest else 0f
+//                val avgReactionTime = if (reactionTimes.isNotEmpty())
+//                    reactionTimes.average() / 1000.0 else 0.0
                 val avgReactionTime = if (reactionTimes.isNotEmpty())
-                    reactionTimes.average() / 1000.0 else 0.0
+                    reactionTimes.average() else 0.0
                 //save to global
                 acc = accuracy.toDouble()
                 avg_Time = avgReactionTime
@@ -1497,7 +1499,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         try {
             var msg = ""
             var accTxt = String.format("%.0f", acc * 100.0)+"%"
-            var responseTimeTxt = String.format("%.4g", avg_Time)
+            var responseTimeTxt = String.format("%.4g", avg_Time/1000.0)
 
             if (categoryId.isNotEmpty()) {
                 val firstCategoryId = categoryId.first()
@@ -1534,13 +1536,15 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                     }
 
                     try {
-                        val performance = Performance(
-                            categoryId = firstCategoryId,
-                            avgResponseTime = avg_Time.toDouble(),
-                            accuracy = acc.toDouble()
-                        )
+//                        val performance = Performance(
+//                            categoryId = firstCategoryId,
+//                            avgResponseTime = avg_Time.toDouble(),
+//                            accuracy = acc.toDouble()
+//                        )
 
-                        val result = dbHelper.addOrUpdatePerformance(performance)
+//                        val result = dbHelper.addOrUpdatePerformance(performance)
+//                        Log.d("saveRecord", avg_Time.toString())
+                        val result = dbHelper.addPerformanceRecord(firstCategoryId, avg_Time, acc)
 
                         if (result != -1L) {
                             isSaved = true
@@ -1899,7 +1903,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         visualization.append("]")
-        visualization.append(" "+String.format("%.4g", avg_Time)+"s")
+        visualization.append(" "+String.format("%.4g", avg_Time/1000.0)+"s")
         return visualization.toString()
     }
 
@@ -1958,7 +1962,7 @@ class PoseDetectionActivity : AppCompatActivity(), SurfaceHolder.Callback {
                     append("\nAvg reaction time:\n")
                     color(color) {
 //                        append(String.format("%.4g", avg_Time))
-                        append(reactionTimeFigure(min_Time, max_Time, avg_Time.toLong()))
+                        append(reactionTimeFigure(min_Time, max_Time, (avg_Time/1000.0).toLong()))
                     }
                     append("\n\n")
                     append(strStart)

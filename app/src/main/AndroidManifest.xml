@@ -24,6 +24,15 @@
         android:theme="@style/Theme.HumanReactor"
         tools:targetApi="31">
         <activity
+            android:name=".statActivity.PerformanceDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".statActivity.CategorySelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".statActivity.StatActivity"
+            android:exported="false" />
+        <activity
             android:name=".exampleActivity"
             android:exported="false" />
         <activity

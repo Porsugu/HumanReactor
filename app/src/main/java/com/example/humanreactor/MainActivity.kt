@@ -4,13 +4,13 @@ package com.example.humanreactor
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.core.ExperimentalGetImage
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import com.example.humanreactor.statActivity.StatActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         }
         statButton.foreground = ContextCompat.getDrawable(this, R.drawable.menu_big_selector)
         statButton.setOnClickListener{
-            val intent = Intent(this, exampleActivity::class.java)
+            val intent = Intent(this, StatActivity::class.java)
             startActivity(intent)
         }
 //
