@@ -24,9 +24,12 @@
 
     <Button
         android:id="@+id/btnAddCategory"
-        android:layout_width="match_parent"
+        style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="#F4A460"
         android:text="Add New Category"
-        android:backgroundTint="#F4A460" />
+        android:textColor="@color/main" />
 
 </LinearLayout>

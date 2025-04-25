@@ -1,439 +1,6 @@
-//package com.example.humanreactor.customizedMove
-//
-//import android.app.AlertDialog
-//import android.content.Context
-//import android.graphics.Color
-//import android.util.Log
-//import android.view.LayoutInflater
-//import android.view.View
-//import android.view.ViewGroup
-//import android.widget.*
-//import androidx.recyclerview.widget.LinearLayoutManager
-//import androidx.recyclerview.widget.RecyclerView
-//import com.example.humanreactor.R
-//
-//class MoveDialogManager(
-//    private val context: Context,
-//    private val moves: MutableList<Move>,
-//    private val usedColors: MutableSet<Int>
-//) {
-//    private val TAG = "MoveDialogManager"
-//
-//    // Show the main Move management dialog
-//    fun showMoveManagementDialog() {
-//        try {
-//            // Inflate the dialog layout
-//            val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_manage_moves, null)
-//
-//
-//            // Create dialog
-//            val dialog = AlertDialog.Builder(context)
-//                .setTitle("Manage Moves")
-//                .setView(dialogView)
-//                .setCancelable(true)
-//                .create()
-//
-//            // Find views
-//            val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
-//            val btnAddMove = dialogView.findViewById<Button>(R.id.btnAddMove)
-//            val btnClose = dialogView.findViewById<Button>(R.id.btnClose)
-//
-//
-//            // Setup RecyclerView with adapter
-//            val movesAdapter = MovesAdapter(
-//                moves,
-//                onEditClick = { position -> showEditDialog(dialog, position) },
-//                onDeleteClick = { position ->
-//                    if (position < moves.size) {
-//                        val moveToDelete = moves[position]
-//                        usedColors.remove(moveToDelete.color)
-//                        moves.removeAt(position)
-//                        recyclerView.adapter?.notifyDataSetChanged()
-//                    }
-//                }
-//            )
-//
-//            recyclerView.layoutManager = LinearLayoutManager(context)
-//            recyclerView.adapter = movesAdapter
-//
-//            // Setup Add button
-//            btnAddMove.setOnClickListener {
-//                showAddDialog(dialog, recyclerView)
-//            }
-//
-//            btnClose.setOnClickListener {
-//                dialog.dismiss()
-//            }
-//
-//            dialog.setOnShowListener {
-//                recyclerView.adapter?.notifyDataSetChanged()
-//                recyclerView.post {
-//                    recyclerView.requestLayout()
-//                }
-//            }
-//            dialog.show()
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error in main dialog", e)
-//            Toast.makeText(context, "Error creating dialog: ${e.message}", Toast.LENGTH_LONG).show()
-//        }
-//    }
-//
-//    // Show dialog for adding a new Move
-//    private fun showAddDialog(parentDialog: AlertDialog, recyclerView: RecyclerView) {
-//        try {
-//            // Create a custom layout
-//            val layout = LinearLayout(context)
-//            layout.orientation = LinearLayout.VERTICAL
-//            layout.setPadding(50, 30, 50, 30)
-//
-//            // Create name input
-//            val nameLabel = TextView(context)
-//            nameLabel.text = "Move Name:"
-//            layout.addView(nameLabel)
-//
-//            val nameInput = EditText(context)
-//            nameInput.hint = "Enter name"
-//            layout.addView(nameInput)
-//
-//            // Add error text for name
-//            val nameErrorText = TextView(context)
-//            nameErrorText.text = "This name is already taken. Please choose another."
-//            nameErrorText.setTextColor(Color.RED)
-//            nameErrorText.visibility = View.GONE
-//            layout.addView(nameErrorText)
-//
-//            // Add spacing
-//            val space = Space(context)
-//            space.minimumHeight = 20
-//            layout.addView(space)
-//
-//            // Create color selection
-//            val colorLabel = TextView(context)
-//            colorLabel.text = "Select Color:"
-//            layout.addView(colorLabel)
-//
-//            // Create color preview
-//            val colorPreview = View(context)
-//            colorPreview.setBackgroundColor(Color.WHITE)
-//            val previewParams = LinearLayout.LayoutParams(
-//                LinearLayout.LayoutParams.MATCH_PARENT, 100
-//            )
-//            previewParams.setMargins(0, 10, 0, 20)
-//            colorPreview.layoutParams = previewParams
-//            layout.addView(colorPreview)
-//
-//            // Create a grid layout for color buttons
-//            val colorGrid = GridLayout(context)
-//            colorGrid.columnCount = 5  // 5 columns for more colors
-//            layout.addView(colorGrid)
-//
-//            // Available colors with expanded palette
-//            val allColors = listOf(
-//                // Basic colors
-//                Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
-//                Color.CYAN, Color.MAGENTA, Color.GRAY, Color.BLACK,
-//
-//                // Additional colors
-//                Color.rgb(255, 165, 0),   // Orange
-//                Color.rgb(128, 0, 128),   // Purple
-//                Color.rgb(165, 42, 42),   // Brown
-//                Color.rgb(0, 128, 0),     // Dark Green
-//                Color.rgb(255, 192, 203), // Pink
-//                Color.rgb(255, 215, 0),   // Gold
-//                Color.rgb(64, 224, 208),  // Turquoise
-//                Color.rgb(218, 112, 214)  // Orchid
-//            )
-//
-//            var selectedColor = allColors.firstOrNull { it !in usedColors } ?: Color.BLACK
-//            colorPreview.setBackgroundColor(selectedColor)
-//
-//            // Create color buttons
-//            for (color in allColors) {
-//                // Create a FrameLayout to hold both the color button and the 'X' mark
-//                val buttonContainer = FrameLayout(context)
-//                val containerParams = LinearLayout.LayoutParams(80, 80)
-//                containerParams.setMargins(5, 5, 5, 5)
-//                buttonContainer.layoutParams = containerParams
-//
-//                // The color button
-//                val colorButton = Button(context)
-//                colorButton.setBackgroundColor(color)
-//                colorButton.layoutParams = FrameLayout.LayoutParams(
-//                    FrameLayout.LayoutParams.MATCH_PARENT,
-//                    FrameLayout.LayoutParams.MATCH_PARENT
-//                )
-//
-//                // Check if this color is already in use
-//                val isUsed = usedColors.contains(color)
-//
-//                // Set enabled state
-//                colorButton.isEnabled = !isUsed
-//                colorButton.alpha = if (isUsed) 0.5f else 1.0f
-//
-//                // Add click listener only if color is available
-//                if (!isUsed) {
-//                    colorButton.setOnClickListener {
-//                        selectedColor = color
-//                        colorPreview.setBackgroundColor(color)
-//                    }
-//                }
-//
-//                buttonContainer.addView(colorButton)
-//
-//                // Add an 'X' mark on top of used colors
-//                if (isUsed) {
-//                    val crossMark = TextView(context)
-//                    crossMark.text = "X"
-//                    crossMark.setTextColor(Color.WHITE)
-//                    crossMark.textSize = 18f
-//                    crossMark.gravity = android.view.Gravity.CENTER
-//
-//                    val crossParams = FrameLayout.LayoutParams(
-//                        FrameLayout.LayoutParams.MATCH_PARENT,
-//                        FrameLayout.LayoutParams.MATCH_PARENT
-//                    )
-//                    crossMark.layoutParams = crossParams
-//
-//                    buttonContainer.addView(crossMark)
-//                }
-//
-//                colorGrid.addView(buttonContainer)
-//            }
-//
-//            // Error text for color selection
-//            val colorErrorText = TextView(context)
-//            colorErrorText.text = "This color is already in use."
-//            colorErrorText.setTextColor(Color.RED)
-//            colorErrorText.visibility = View.GONE
-//            layout.addView(colorErrorText)
-//
-//            // Create dialog
-//            val dialog = AlertDialog.Builder(context)
-//                .setTitle("Add New Move")
-//                .setView(layout)
-//                .setPositiveButton("Save") { _, _ ->
-//                    val name = nameInput.text.toString().trim()
-//
-//                    // Check if name is empty
-//                    if (name.isEmpty()) {
-//                        Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Check if name is already used
-//                    val nameExists = moves.any { it.name.equals(name, ignoreCase = true) }
-//                    if (nameExists) {
-//                        Toast.makeText(context, "This name is already taken", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Check if color is already used
-//                    if (usedColors.contains(selectedColor)) {
-//                        Toast.makeText(context, "This color is already in use", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Add new move
-//                    val newMove = Move(name, selectedColor)
-//                    moves.add(newMove)
-//                    usedColors.add(selectedColor)
-//
-//                    // Update RecyclerView
-//                    recyclerView.adapter?.notifyDataSetChanged()
-//                }
-//                .setNegativeButton("Cancel", null)
-//                .create()
-//
-//            dialog.show()
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error in add dialog", e)
-//            Toast.makeText(context, "Error creating add dialog: ${e.message}", Toast.LENGTH_LONG).show()
-//        }
-//    }
-//
-//    // Show dialog for editing an existing Move
-//    private fun showEditDialog(parentDialog: AlertDialog, position: Int) {
-//        try {
-//            if (position >= moves.size) return
-//
-//            val moveToEdit = moves[position]
-//            val recyclerView = parentDialog.findViewById<RecyclerView>(R.id.recyclerView)
-//
-//
-//            // Create a custom layout
-//            val layout = LinearLayout(context)
-//            layout.orientation = LinearLayout.VERTICAL
-//            layout.setPadding(50, 30, 50, 30)
-//
-//            // Create name input
-//            val nameLabel = TextView(context)
-//            nameLabel.text = "Move Name:"
-//            layout.addView(nameLabel)
-//
-//            val nameInput = EditText(context)
-//            nameInput.setText(moveToEdit.name)
-//            layout.addView(nameInput)
-//
-//            // Add error text for name
-//            val nameErrorText = TextView(context)
-//            nameErrorText.text = "This name is already taken. Please choose another."
-//            nameErrorText.setTextColor(Color.RED)
-//            nameErrorText.visibility = View.GONE
-//            layout.addView(nameErrorText)
-//
-//            // Add spacing
-//            val space = Space(context)
-//            space.minimumHeight = 20
-//            layout.addView(space)
-//
-//            // Create color selection
-//            val colorLabel = TextView(context)
-//            colorLabel.text = "Select Color:"
-//            layout.addView(colorLabel)
-//
-//            // Create color preview
-//            val colorPreview = View(context)
-//            colorPreview.setBackgroundColor(moveToEdit.color)
-//            val previewParams = LinearLayout.LayoutParams(
-//                LinearLayout.LayoutParams.MATCH_PARENT, 100
-//            )
-//            previewParams.setMargins(0, 10, 0, 20)
-//            colorPreview.layoutParams = previewParams
-//            layout.addView(colorPreview)
-//
-//            // Create a grid layout for color buttons
-//            val colorGrid = GridLayout(context)
-//            colorGrid.columnCount = 5  // 5 columns for more colors
-//            layout.addView(colorGrid)
-//
-//            // Available colors with expanded palette
-//            val allColors = listOf(
-//                // Basic colors
-//                Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
-//                Color.CYAN, Color.MAGENTA, Color.GRAY, Color.BLACK,
-//
-//                // Additional colors
-//                Color.rgb(255, 165, 0),   // Orange
-//                Color.rgb(128, 0, 128),   // Purple
-//                Color.rgb(165, 42, 42),   // Brown
-//                Color.rgb(0, 128, 0),     // Dark Green
-//                Color.rgb(255, 192, 203), // Pink
-//                Color.rgb(255, 215, 0),   // Gold
-//                Color.rgb(64, 224, 208),  // Turquoise
-//                Color.rgb(218, 112, 214)  // Orchid
-//            )
-//
-//            var selectedColor = moveToEdit.color
-//
-//            // Create color buttons
-//            for (color in allColors) {
-//                // Create a FrameLayout to hold both the color button and the 'X' mark
-//                val buttonContainer = FrameLayout(context)
-//                val containerParams = LinearLayout.LayoutParams(80, 80)
-//                containerParams.setMargins(5, 5, 5, 5)
-//                buttonContainer.layoutParams = containerParams
-//
-//                // The color button
-//                val colorButton = Button(context)
-//                colorButton.setBackgroundColor(color)
-//                colorButton.layoutParams = FrameLayout.LayoutParams(
-//                    FrameLayout.LayoutParams.MATCH_PARENT,
-//                    FrameLayout.LayoutParams.MATCH_PARENT
-//                )
-//
-//                // Check if this color is already in use (except the current move's color)
-//                val isUsed = usedColors.contains(color) && color != moveToEdit.color
-//
-//                // Set enabled state
-//                colorButton.isEnabled = !isUsed
-//                colorButton.alpha = if (isUsed) 0.5f else 1.0f
-//
-//                // Highlight the currently selected color
-//                if (color == moveToEdit.color) {
-//                    colorButton.setBackgroundResource(android.R.drawable.btn_default)
-//                    colorButton.setBackgroundColor(color)
-//                }
-//
-//                // Add click listener only if color is available
-//                if (!isUsed) {
-//                    colorButton.setOnClickListener {
-//                        selectedColor = color
-//                        colorPreview.setBackgroundColor(color)
-//                    }
-//                }
-//
-//                buttonContainer.addView(colorButton)
-//
-//                // Add an 'X' mark on top of used colors
-//                if (isUsed) {
-//                    val crossMark = TextView(context)
-//                    crossMark.text = "X"
-//                    crossMark.setTextColor(Color.WHITE)
-//                    crossMark.textSize = 18f
-//                    crossMark.gravity = android.view.Gravity.CENTER
-//
-//                    val crossParams = FrameLayout.LayoutParams(
-//                        FrameLayout.LayoutParams.MATCH_PARENT,
-//                        FrameLayout.LayoutParams.MATCH_PARENT
-//                    )
-//                    crossMark.layoutParams = crossParams
-//
-//                    buttonContainer.addView(crossMark)
-//                }
-//
-//                colorGrid.addView(buttonContainer)
-//            }
-//
-//            // Create dialog
-//            val dialog = AlertDialog.Builder(context)
-//                .setTitle("Edit Move")
-//                .setView(layout)
-//                .setPositiveButton("Save") { _, _ ->
-//                    val name = nameInput.text.toString().trim()
-//
-//                    // Check if name is empty
-//                    if (name.isEmpty()) {
-//                        Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Check if name is already used by another move
-//                    val nameExists = moves.any {
-//                        it != moveToEdit && it.name.equals(name, ignoreCase = true)
-//                    }
-//                    if (nameExists) {
-//                        Toast.makeText(context, "This name is already taken", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Check if color is already used by another move
-//                    if (usedColors.contains(selectedColor) && selectedColor != moveToEdit.color) {
-//                        Toast.makeText(context, "This color is already in use", Toast.LENGTH_SHORT).show()
-//                        return@setPositiveButton
-//                    }
-//
-//                    // Update move
-//                    usedColors.remove(moveToEdit.color)
-//                    moveToEdit.name = name
-//                    moveToEdit.color = selectedColor
-//                    usedColors.add(selectedColor)
-//
-//                    // Update RecyclerView
-//                    recyclerView?.adapter?.notifyDataSetChanged()
-//                }
-//                .setNegativeButton("Cancel", null)
-//                .create()
-//
-//            dialog.show()
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error in edit dialog", e)
-//            Toast.makeText(context, "Error creating edit dialog: ${e.message}", Toast.LENGTH_LONG).show()
-//        }
-//    }
-//}
-
 package com.example.humanreactor.customizedMove
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
@@ -456,84 +23,103 @@ import com.google.android.material.tabs.TabLayout
 class MoveDialogManager(
     private val context: Context,
     private val dbHelper: ActionDatabaseHelper,
-    private val externalMoves: MutableList<Move>,  // 添加外部列表参数
-    private val externalUsedColors: MutableSet<Int>  // 添加外部颜色集合参数
+    private val externalMoves: MutableList<Move>,  // Add external list parameter
+    private val externalUsedColors: MutableSet<Int>,  // Add external color set parameter
+    private var externalCategoryId: MutableSet<Int>
+//    private val externalCatelog: String
 ) {
     private val TAG = "MoveDialogManager"
 
-    // 存储类别和动作
+    // Store categories and actions
     private var categories: List<Category> = emptyList()
     private var actionsByCategory: Map<Int, List<Action>> = emptyMap()
-    private var selectedCategoryId: Int = -1
+    var selectedCategoryId: Int = -1
     private var selectedCategoryName: String = ""
 
-    // 显示主对话框
+    interface OnDialogDismissListener {
+        fun onDialogDismissed()
+    }
+
+    private var dismissListener: OnDialogDismissListener? = null
+
+    fun setOnDialogDismissListener(listener: OnDialogDismissListener) {
+        this.dismissListener = listener
+    }
+
+    // Show the main dialog
+    @SuppressLint("NotifyDataSetChanged")
     fun showMoveManagementDialog() {
         try {
-            // 加载对话框布局
+            // Load dialog layout
             val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_tabbed_manage_moves, null)
 
-            // 创建对话框
+            // Create dialog
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Manage Categories and Moves")
                 .setView(dialogView)
                 .setCancelable(true)
                 .create()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.big_frame_wbg)
 
-            // 查找视图元素
+            dialog.setOnDismissListener {
+                dismissListener?.onDialogDismissed()
+            }
+
+            // Find view elements
             val tabLayout = dialogView.findViewById<TabLayout>(R.id.tabLayout)
             val categoriesContainer = dialogView.findViewById<FrameLayout>(R.id.categoriesContainer)
             val movesContainer = dialogView.findViewById<FrameLayout>(R.id.movesContainer)
             val btnClose = dialogView.findViewById<Button>(R.id.btnClose)
 
-            // 加载标签页内容
+            // Load tab content
             val categoriesView = LayoutInflater.from(context).inflate(R.layout.tab_categories, null)
             val movesView = LayoutInflater.from(context).inflate(R.layout.tab_category_moves, null)
 
             categoriesContainer.addView(categoriesView)
             movesContainer.addView(movesView)
 
-            // 设置关闭按钮
+            // Set close button
             btnClose.setOnClickListener {
-                // 关闭对话框前自动加载选中的动作到外部列表
+                // Load selected actions to external list before closing dialog
                 loadSelectedMovesToExternal()
                 dialog.dismiss()
             }
 
-            // 设置类别管理标签页
+            // Set up category management tab
             setupCategoriesTab(categoriesView, dialog)
 
-            // 设置动作管理标签页
+            // Set up action management tab
             setupCategoryMovesTab(movesView, dialog)
 
-            // 处理标签页选择
+            // Handle tab selection
             tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                @SuppressLint("NotifyDataSetChanged")
                 override fun onTabSelected(tab: TabLayout.Tab) {
                     when (tab.position) {
                         0 -> {
-                            // 切换到类别标签页
+                            // Switch to categories tab
                             categoriesContainer.visibility = View.VISIBLE
                             movesContainer.visibility = View.GONE
-                            // 刷新类别列表并确保选中状态正确显示
+                            // Refresh category list and ensure selection status is displayed correctly
                             loadCategories(categoriesView)
                             categoriesView.findViewById<RecyclerView>(R.id.recyclerViewCategories)?.adapter?.notifyDataSetChanged()
                         }
                         1 -> {
-                            // 切换到动作标签页，需要有选中的类别
+                            // Switch to actions tab, a category must be selected
                             if (selectedCategoryId != -1) {
                                 categoriesContainer.visibility = View.GONE
                                 movesContainer.visibility = View.VISIBLE
 
-                                // 更新标题显示选中的类别
+                                // Update title to show selected category
                                 val tvCategoryTitle = movesView.findViewById<TextView>(R.id.tvCategoryTitle)
                                 tvCategoryTitle.text = "Moves in: $selectedCategoryName"
 
-                                // 加载所选类别的动作
+                                // Load actions of selected category
                                 loadCategoryMoves(movesView)
                             } else {
-                                // 如果没有选中类别，不允许切换到动作标签页
+                                // If no category is selected, don't allow switching to actions tab
                                 Toast.makeText(context, "Please select a category first", Toast.LENGTH_SHORT).show()
-                                // 切回类别标签页
+                                // Switch back to categories tab
                                 tabLayout.getTabAt(0)?.select()
                             }
                         }
@@ -544,7 +130,7 @@ class MoveDialogManager(
                 override fun onTabReselected(tab: TabLayout.Tab) {}
             })
 
-            // 显示对话框，默认显示类别标签页
+            // Show dialog, display categories tab by default
             categoriesContainer.visibility = View.VISIBLE
             movesContainer.visibility = View.GONE
             loadCategories(categoriesView)
@@ -558,202 +144,243 @@ class MoveDialogManager(
 
         } catch (e: Exception) {
             Log.e(TAG, "Error in main dialog", e)
-            Toast.makeText(context, "Error creating dialog: ${e.message}", Toast.LENGTH_LONG).show()
+//            Toast.makeText(context, "Error creating dialog: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
-    // 加载选中类别的动作到外部列表
+    // Load selected category's actions to external list
     private fun loadSelectedMovesToExternal() {
         try {
             if (selectedCategoryId == -1) return
 
-            // 获取所选类别的动作
+            // Get actions of selected category
             val actions = actionsByCategory[selectedCategoryId] ?: emptyList()
 
-            // 清空外部列表和颜色集合
+            // Clear external list and color set
             externalMoves.clear()
             externalUsedColors.clear()
 
-            // 将动作转换并添加到外部列表
+            // Convert actions and add to external list
             actions.forEach { action ->
                 val move = Move(
                     name = action.name,
                     color = action.color,
                     dbId = action.id
-                    // 保留Move类的其他默认参数
+                    // Keep other default parameters of Move class
                 )
                 externalMoves.add(move)
                 externalUsedColors.add(action.color)
             }
 
-            // 通知用户
-            Toast.makeText(context, "Loaded ${actions.size} moves from '$selectedCategoryName'", Toast.LENGTH_SHORT).show()
+            // Notify user
+//            Toast.makeText(context, "Loaded ${actions.size} moves from '$selectedCategoryName'", Toast.LENGTH_SHORT).show()
 
         } catch (e: Exception) {
             Log.e(TAG, "Error loading moves to external list", e)
         }
     }
 
-    // 设置类别管理标签页
+    // Set up category management tab
     private fun setupCategoriesTab(tabView: View, dialog: AlertDialog) {
         try {
-            // 查找视图元素
+            // Find view elements
             val recyclerView = tabView.findViewById<RecyclerView>(R.id.recyclerViewCategories)
             val btnAddCategory = tabView.findViewById<Button>(R.id.btnAddCategory)
 
-            // 设置添加类别按钮
+            // Set add category button
             btnAddCategory.setOnClickListener {
                 showAddCategoryDialog(dialog, tabView)
             }
 
-            // 设置RecyclerView布局 - 修改这部分
+            // Set RecyclerView layout - modify this part
             val layoutManager = LinearLayoutManager(context)
             recyclerView.layoutManager = layoutManager
 
-            // 添加分隔线
+            // Add divider line
             val dividerItemDecoration = DividerItemDecoration(
                 recyclerView.context,
                 layoutManager.orientation
             )
             recyclerView.addItemDecoration(dividerItemDecoration)
 
-            // 设置固定大小以提高性能
+            // Set fixed size to improve performance
             recyclerView.setHasFixedSize(true)
 
-            // 加载类别数据
+            // Load category data
             loadCategories(tabView)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in setup categories tab", e)
+//            Log.e(TAG, "Error in setup categories tab", e)
         }
     }
 
-    // 设置类别动作管理标签页
+    // Set up category actions management tab
     private fun setupCategoryMovesTab(tabView: View, dialog: AlertDialog) {
         try {
-            // 查找视图元素
+            // Find view elements
             val recyclerView = tabView.findViewById<RecyclerView>(R.id.recyclerViewCategoryMoves)
             val btnAddMove = tabView.findViewById<Button>(R.id.btnAddCategoryMove)
             val tvCategoryTitle = tabView.findViewById<TextView>(R.id.tvCategoryTitle)
 
-            // 设置RecyclerView布局
+            // Set RecyclerView layout
             recyclerView.layoutManager = LinearLayoutManager(context)
 
-            // 设置添加动作按钮
+            // Set add action button
             btnAddMove.setOnClickListener {
                 if (selectedCategoryId != -1) {
                     showAddMoveDialog(dialog, tabView)
                 } else {
-                    Toast.makeText(context, "Please select a category first", Toast.LENGTH_SHORT).show()
+//                    Toast.makeText(context, "Please select a category first", Toast.LENGTH_SHORT).show()
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in setup category moves tab", e)
+//            Log.e(TAG, "Error in setup category moves tab", e)
         }
     }
 
-    // 加载类别数据
+    // Load category data
     private fun loadCategories(tabView: View) {
         try {
-            // 从数据库获取所有类别
+            // Get all categories from database
             categories = dbHelper.getAllCategories()
 
-            // 为每个类别加载动作
+//            if (categories.isNotEmpty()) {
+//                if (selectedCategoryId == -1 || !categories.any { it.id == selectedCategoryId }) {
+//                    selectedCategoryId = categories.first().id
+//                    selectedCategoryName = categories.first().name
+//
+////                    loadSelectedMovesToExternal()
+//                    syncExternalCollections()
+//                }
+//                if (selectedCategoryId == -1 || !categories.any { it.id == selectedCategoryId }) {
+//                    selectedCategoryId = categories.first().id
+//                    selectedCategoryName = categories.first().name
+//
+////                    loadSelectedMovesToExternal()
+//                    syncExternalCollections()
+//                }
+//            } else {
+//                selectedCategoryId = -1
+//                selectedCategoryName = ""
+//            }
+            if (selectedCategoryId != -1 && !categories.any { it.id == selectedCategoryId }) {
+                // If the selected category was deleted, reset selection
+                selectedCategoryId = -1
+                selectedCategoryName = ""
+                syncExternalCollections() // Clear external collections
+            }
+
+            // Load actions for each category
             val actionsMap = mutableMapOf<Int, List<Action>>()
             categories.forEach { category ->
                 actionsMap[category.id] = dbHelper.getActionsByCategory(category.id)
             }
             actionsByCategory = actionsMap
 
-            // 设置类别RecyclerView适配器
+            // Set category RecyclerView adapter
             val recyclerView = tabView.findViewById<RecyclerView>(R.id.recyclerViewCategories)
 
             val adapter = CategoryAdapter(
                 categories,
                 onSelectClick = { category ->
-                    // 选择一个类别
+                    // Select a category
                     selectedCategoryId = category.id
                     selectedCategoryName = category.name
 
-                    // 自动将此类别的动作加载到外部列表
+                    // Automatically load this category's actions to external list
                     loadSelectedMovesToExternal()
 
-                    // 通知适配器更新，立即显示选中效果
+                    // Notify adapter to update, immediately show selection effect
                     recyclerView.adapter?.notifyDataSetChanged()
 
-                    // 切换到动作标签页
+                    // Switch to actions tab
                     val dialog = getAlertDialogFromView(tabView)
                     val tabLayout = dialog?.findViewById<TabLayout>(R.id.tabLayout)
                     tabLayout?.getTabAt(1)?.select()
                 },
                 onEditClick = { category ->
-                    // 编辑类别
+                    // Edit category
                     showEditCategoryDialog(category, tabView)
                 },
                 onDeleteClick = { category ->
-                    // 删除类别
+                    // Delete category
                     showDeleteCategoryConfirmDialog(category, tabView)
                 }
             )
 
             recyclerView.adapter = adapter
 
-            // 如果之前选中了类别但现在已被删除，重置选中状态
+            // If a category was previously selected but has now been deleted, reset selection state
             if (selectedCategoryId != -1 && !categories.any { it.id == selectedCategoryId }) {
                 selectedCategoryId = -1
                 selectedCategoryName = ""
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading categories", e)
+//            Log.e(TAG, "Error loading categories", e)
         }
     }
 
-    // 加载所选类别的动作
+    // Load actions of selected category
     private fun loadCategoryMoves(tabView: View) {
         try {
             if (selectedCategoryId == -1) return
 
+            Log.d("DEBUG_LOAD", "Loading moves for category: $selectedCategoryId")
+
             // 获取所选类别的动作
             val actions = actionsByCategory[selectedCategoryId] ?: emptyList()
+            Log.d("DEBUG_LOAD", "Found ${actions.size} actions in database")
 
             // 设置动作RecyclerView适配器
             val recyclerView = tabView.findViewById<RecyclerView>(R.id.recyclerViewCategoryMoves)
 
+            // 将actions转换为moves
+            val categoryMoves = actions.map { action ->
+                Move(
+                    name = action.name,
+                    color = action.color,
+                    dbId = action.id,
+                    isTrained = false,
+                    isCollected = false
+                )
+            }.toMutableList()
+
+            // 使用全新的适配器实例，避免可能的状态问题
             val adapter = MovesAdapter(
-                actions.map { action ->
-                    // 将Action转换为Move对象（用于显示）
-                    Move(
-                        name = action.name,
-                        color = action.color,
-                        dbId = action.id,
-                        isTrained = false,
-                        isCollected = false
-                    )
-                }.toMutableList(),
+                categoryMoves,
                 onEditClick = { position, move ->
-                    // 编辑动作
                     if (move.dbId != null) {
                         showEditMoveDialog(move, tabView)
                     }
                 },
                 onDeleteClick = { position, move ->
-                    // 删除动作
                     if (move.dbId != null) {
                         showDeleteMoveConfirmDialog(move, tabView)
                     }
                 }
             )
 
+            // 设置新的适配器
             recyclerView.adapter = adapter
+            recyclerView.layoutManager = LinearLayoutManager(context)
+
+            // 延迟一帧后再次刷新，确保完全渲染
+            recyclerView.post {
+                adapter.notifyDataSetChanged()
+                recyclerView.invalidate()
+            }
+
+            Log.d("DEBUG_LOAD", "Moves loaded successfully with ${categoryMoves.size} items")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading category moves", e)
+            Log.e("DEBUG_LOAD", "Error loading category moves", e)
+            e.printStackTrace()
         }
     }
 
-    // 从视图获取AlertDialog实例
+    // Get AlertDialog instance from view
     private fun getAlertDialogFromView(view: View): AlertDialog? {
         var parent = view.parent
         while (parent != null) {
@@ -765,15 +392,15 @@ class MoveDialogManager(
         return null
     }
 
-    // 显示添加类别对话框
+    // Show add category dialog
     private fun showAddCategoryDialog(parentDialog: AlertDialog, tabView: View) {
         try {
-            // 创建自定义布局
+            // Create custom layout
             val layout = LinearLayout(context)
             layout.orientation = LinearLayout.VERTICAL
             layout.setPadding(50, 30, 50, 30)
 
-            // 创建名称输入
+            // Create name input
             val nameLabel = TextView(context)
             nameLabel.text = "Category Name:"
             layout.addView(nameLabel)
@@ -782,37 +409,37 @@ class MoveDialogManager(
             nameInput.hint = "Enter category name"
             layout.addView(nameInput)
 
-            // 创建对话框
+            // Create dialog
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Add New Category")
                 .setView(layout)
                 .setPositiveButton("Save") { _, _ ->
                     val name = nameInput.text.toString().trim()
 
-                    // 检查名称是否为空
+                    // Check if name is empty
                     if (name.isEmpty()) {
                         Toast.makeText(context, "Category name cannot be empty", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 检查名称是否已被使用
+                    // Check if name is already used
                     val nameExists = categories.any { it.name.equals(name, ignoreCase = true) }
                     if (nameExists) {
                         Toast.makeText(context, "This category name is already taken", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 添加新类别到数据库
+                    // Add new category to database
                     val categoryId = dbHelper.addCategory(name)
                     if (categoryId > 0) {
                         Toast.makeText(context, "Category added successfully", Toast.LENGTH_SHORT).show()
 
-                        // 刷新类别列表
+                        // Refresh category list
                         loadCategories(tabView)
 
-                        // 自动选择新添加的类别
-                        selectedCategoryId = categoryId.toInt()
-                        selectedCategoryName = name
+//                        // Automatically select new category
+//                        selectedCategoryId = categoryId.toInt()
+//                        selectedCategoryName = name
                     } else {
                         Toast.makeText(context, "Failed to add category", Toast.LENGTH_SHORT).show()
                     }
@@ -827,15 +454,15 @@ class MoveDialogManager(
         }
     }
 
-    // 显示编辑类别对话框
+    // Show edit category dialog
     private fun showEditCategoryDialog(category: Category, tabView: View) {
         try {
-            // 创建自定义布局
+            // Create custom layout
             val layout = LinearLayout(context)
             layout.orientation = LinearLayout.VERTICAL
             layout.setPadding(50, 30, 50, 30)
 
-            // 创建名称输入
+            // Create name input
             val nameLabel = TextView(context)
             nameLabel.text = "Category Name:"
             layout.addView(nameLabel)
@@ -844,42 +471,42 @@ class MoveDialogManager(
             nameInput.setText(category.name)
             layout.addView(nameInput)
 
-            // 创建对话框
+            // Create dialog
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Edit Category")
                 .setView(layout)
                 .setPositiveButton("Save") { _, _ ->
                     val name = nameInput.text.toString().trim()
 
-                    // 检查名称是否为空
+                    // Check if name is empty
                     if (name.isEmpty()) {
                         Toast.makeText(context, "Category name cannot be empty", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 检查名称是否已被其他类别使用
+                    // Check if name is already used by other categories
                     val nameExists = categories.any { it.id != category.id && it.name.equals(name, ignoreCase = true) }
                     if (nameExists) {
                         Toast.makeText(context, "This category name is already taken", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 更新类别
+                    // Update category
                     val updatedCategory = Category(category.id, name)
                     val rowsAffected = dbHelper.updateCategory(updatedCategory)
 
                     if (rowsAffected > 0) {
-                        Toast.makeText(context, "Category updated successfully", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Category updated successfully", Toast.LENGTH_SHORT).show()
 
-                        // 如果更新的是当前选中的类别，也更新选中的类别名
+                        // If updating the currently selected category, also update selected category name
                         if (category.id == selectedCategoryId) {
                             selectedCategoryName = name
                         }
 
-                        // 刷新类别列表
+                        // Refresh category list
                         loadCategories(tabView)
                     } else {
-                        Toast.makeText(context, "Failed to update category", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Failed to update category", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .setNegativeButton("Cancel", null)
@@ -892,10 +519,10 @@ class MoveDialogManager(
         }
     }
 
-    // 显示删除类别确认对话框
+    // Show delete category confirmation dialog
     private fun showDeleteCategoryConfirmDialog(category: Category, tabView: View) {
         try {
-            // 检查是否有动作关联到此类别
+            // Check if there are actions associated with this category
             val hasActions = (actionsByCategory[category.id]?.isNotEmpty()) ?: false
 
             val message = if (hasActions) {
@@ -908,13 +535,13 @@ class MoveDialogManager(
                 .setTitle("Confirm Delete")
                 .setMessage(message)
                 .setPositiveButton("Delete") { _, _ ->
-                    // 执行删除操作
+                    // Perform delete operation
                     val success = dbHelper.deleteCategory(category.id)
 
                     if (success) {
-                        Toast.makeText(context, "Category deleted successfully", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Category deleted successfully", Toast.LENGTH_SHORT).show()
 
-                        // 如果删除的是当前选中的类别，重置选中状态和外部列表
+                        // If deleting the currently selected category, reset selection state and external list
                         if (category.id == selectedCategoryId) {
                             selectedCategoryId = -1
                             selectedCategoryName = ""
@@ -922,10 +549,10 @@ class MoveDialogManager(
                             externalUsedColors.clear()
                         }
 
-                        // 刷新类别列表
+                        // Refresh category list
                         loadCategories(tabView)
                     } else {
-                        Toast.makeText(context, "Failed to delete category", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Failed to delete category", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .setNegativeButton("Cancel", null)
@@ -937,17 +564,17 @@ class MoveDialogManager(
         }
     }
 
-    // 显示添加动作对话框
+    // Show add action dialog
     private fun showAddMoveDialog(parentDialog: AlertDialog, tabView: View) {
         try {
             if (selectedCategoryId == -1) return
 
-            // 创建自定义布局
+            // Create custom layout
             val layout = LinearLayout(context)
             layout.orientation = LinearLayout.VERTICAL
             layout.setPadding(50, 30, 50, 30)
 
-            // 创建名称输入
+            // Create name input
             val nameLabel = TextView(context)
             nameLabel.text = "Move Name:"
             layout.addView(nameLabel)
@@ -956,17 +583,17 @@ class MoveDialogManager(
             nameInput.hint = "Enter move name"
             layout.addView(nameInput)
 
-            // 添加间距
+            // Add spacing
             val space = Space(context)
             space.minimumHeight = 20
             layout.addView(space)
 
-            // 创建颜色选择
+            // Create color selection
             val colorLabel = TextView(context)
             colorLabel.text = "Select Color:"
             layout.addView(colorLabel)
 
-            // 创建颜色预览
+            // Create color preview
             val colorPreview = View(context)
             colorPreview.setBackgroundColor(Color.WHITE)
             val previewParams = LinearLayout.LayoutParams(
@@ -976,12 +603,12 @@ class MoveDialogManager(
             colorPreview.layoutParams = previewParams
             layout.addView(colorPreview)
 
-            // 创建颜色按钮网格
+            // Create color button grid
             val colorGrid = GridLayout(context)
             colorGrid.columnCount = 5
             layout.addView(colorGrid)
 
-            // 可用颜色
+            // Available colors
             val allColors = listOf(
                 Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
                 Color.CYAN,
@@ -992,14 +619,14 @@ class MoveDialogManager(
 //                Color.rgb(64, 224, 208), Color.rgb(218, 112, 214)
             )
 
-            // 获取当前类别中已使用的颜色
+            // Get colors already used in current category
             val categoryActions = actionsByCategory[selectedCategoryId] ?: emptyList()
             val usedColors = categoryActions.map { it.color }.toSet()
 
             var selectedColor = allColors.firstOrNull { it !in usedColors } ?: Color.BLACK
             colorPreview.setBackgroundColor(selectedColor)
 
-            // 创建颜色按钮
+            // Create color buttons
             for (color in allColors) {
                 val buttonContainer = FrameLayout(context)
                 val containerParams = LinearLayout.LayoutParams(80, 80)
@@ -1038,7 +665,7 @@ class MoveDialogManager(
                 colorGrid.addView(buttonContainer)
             }
 
-            // 创建对话框
+            // Create dialog
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Add New Move")
                 .setView(layout)
@@ -1050,20 +677,20 @@ class MoveDialogManager(
                         return@setPositiveButton
                     }
 
-                    // 检查此类别中是否已有同名动作
+                    // Check if there is already an action with the same name in this category
                     val nameExists = categoryActions.any { it.name.equals(name, ignoreCase = true) }
                     if (nameExists) {
                         Toast.makeText(context, "This move name is already taken in this category", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 检查颜色是否已被使用
+                    // Check if color is already used
                     if (usedColors.contains(selectedColor)) {
                         Toast.makeText(context, "This color is already in use in this category", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 创建新动作并添加到数据库
+                    // Create new action and add to database
                     val newAction = Action(
                         name = name,
                         color = selectedColor,
@@ -1072,16 +699,16 @@ class MoveDialogManager(
 
                     val insertedId = dbHelper.addAction(newAction)
                     if (insertedId > 0) {
-                        Toast.makeText(context, "Move added successfully", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Move added successfully", Toast.LENGTH_SHORT).show()
 
-                        // 重新加载类别数据和动作
+                        // Reload category data and actions
                         loadCategories(getTabViewByIndex(parentDialog, 0))
                         loadCategoryMoves(tabView)
 
-                        // 更新外部列表
+                        // Update external list
                         loadSelectedMovesToExternal()
                     } else {
-                        Toast.makeText(context, "Failed to add move", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Failed to add move", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .setNegativeButton("Cancel", null)
@@ -1094,17 +721,17 @@ class MoveDialogManager(
         }
     }
 
-    // 显示编辑动作对话框
+    // Show edit action dialog
     private fun showEditMoveDialog(move: Move, tabView: View) {
         try {
             if (selectedCategoryId == -1 || move.dbId == null) return
 
-            // 创建自定义布局
+            // Create custom layout
             val layout = LinearLayout(context)
             layout.orientation = LinearLayout.VERTICAL
             layout.setPadding(50, 30, 50, 30)
 
-            // 创建名称输入
+            // Create name input
             val nameLabel = TextView(context)
             nameLabel.text = "Move Name:"
             layout.addView(nameLabel)
@@ -1113,17 +740,17 @@ class MoveDialogManager(
             nameInput.setText(move.name)
             layout.addView(nameInput)
 
-            // 添加间距
+            // Add spacing
             val space = Space(context)
             space.minimumHeight = 20
             layout.addView(space)
 
-            // 创建颜色选择
+            // Create color selection
             val colorLabel = TextView(context)
             colorLabel.text = "Select Color:"
             layout.addView(colorLabel)
 
-            // 创建颜色预览
+            // Create color preview
             val colorPreview = View(context)
             colorPreview.setBackgroundColor(move.color)
             val previewParams = LinearLayout.LayoutParams(
@@ -1133,12 +760,12 @@ class MoveDialogManager(
             colorPreview.layoutParams = previewParams
             layout.addView(colorPreview)
 
-            // 创建颜色按钮网格
+            // Create color button grid
             val colorGrid = GridLayout(context)
             colorGrid.columnCount = 5
             layout.addView(colorGrid)
 
-            // 可用颜色
+            // Available colors
             val allColors = listOf(
                 Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
                 Color.CYAN,
@@ -1149,13 +776,13 @@ class MoveDialogManager(
 //                Color.rgb(64, 224, 208), Color.rgb(218, 112, 214)
             )
 
-            // 获取当前类别中已使用的颜色
+            // Get colors already used in current category
             val categoryActions = actionsByCategory[selectedCategoryId] ?: emptyList()
             val usedColors = categoryActions.map { it.color }.toSet()
 
             var selectedColor = move.color
 
-            // 创建颜色按钮
+            // Create color buttons
             for (color in allColors) {
                 val buttonContainer = FrameLayout(context)
                 val containerParams = LinearLayout.LayoutParams(80, 80)
@@ -1169,13 +796,13 @@ class MoveDialogManager(
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
 
-                // 检查颜色是否已被其他动作使用
+                // Check if color is already used by other actions
                 val isUsed = usedColors.contains(color) && color != move.color
 
                 colorButton.isEnabled = !isUsed
                 colorButton.alpha = if (isUsed) 0.5f else 1.0f
 
-                // 高亮当前选中的颜色
+                // Highlight currently selected color
                 if (color == move.color) {
                     colorButton.setBackgroundResource(android.R.drawable.btn_default)
                     colorButton.setBackgroundColor(color)
@@ -1202,7 +829,7 @@ class MoveDialogManager(
                 colorGrid.addView(buttonContainer)
             }
 
-            // 创建对话框
+            // Create dialog
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Edit Move")
                 .setView(layout)
@@ -1214,7 +841,7 @@ class MoveDialogManager(
                         return@setPositiveButton
                     }
 
-                    // 检查此类别中是否已有同名动作(除了当前编辑的动作)
+                    // Check if there is already an action with the same name in this category (except the current action being edited)
                     val nameExists = categoryActions.any {
                         it.id != move.dbId && it.name.equals(name, ignoreCase = true)
                     }
@@ -1223,13 +850,13 @@ class MoveDialogManager(
                         return@setPositiveButton
                     }
 
-                    // 检查颜色是否已被其他动作使用
+                    // Check if color is already used by other actions
                     if (usedColors.contains(selectedColor) && selectedColor != move.color) {
                         Toast.makeText(context, "This color is already in use in this category", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
 
-                    // 更新数据库中的动作
+                    // Update action in database
                     val updatedAction = Action(
                         id = move.dbId!!,
                         name = name,
@@ -1239,19 +866,31 @@ class MoveDialogManager(
 
                     val rowsAffected = dbHelper.updateAction(updatedAction)
                     if (rowsAffected > 0) {
-                        Toast.makeText(context, "Move updated successfully", Toast.LENGTH_SHORT).show()
 
-                        // 重新加载类别数据和动作
+                        Log.d("DEBUG_EDIT", "Database deletion successful")
+
+                        categories = dbHelper.getAllCategories()
+
+                        val actionsMap = mutableMapOf<Int, List<Action>>()
+                        categories.forEach { category ->
+                            actionsMap[category.id] = dbHelper.getActionsByCategory(category.id)
+                        }
+                        actionsByCategory = actionsMap
+
+                        loadCategoryMoves(tabView)
+                        syncExternalCollections()
+
+                        Log.d("DEBUG_EDIT", "After sync - External moves: ${externalMoves.size}")
+
+                        Toast.makeText(context, "Move deleted successfully", Toast.LENGTH_SHORT).show()
+
                         val parentDialog = getAlertDialogFromView(tabView)
                         if (parentDialog != null) {
                             loadCategories(getTabViewByIndex(parentDialog, 0))
                             loadCategoryMoves(tabView)
-
-                            // 更新外部列表
-                            loadSelectedMovesToExternal()
                         }
                     } else {
-                        Toast.makeText(context, "Failed to update move", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Failed to update move", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .setNegativeButton("Cancel", null)
@@ -1264,11 +903,14 @@ class MoveDialogManager(
         }
     }
 
-    // 显示删除动作确认对话框
-
+    // Show delete action confirmation dialog
     private fun showDeleteMoveConfirmDialog(move: Move, tabView: View) {
         try {
             if (move.dbId == null) return
+
+            // 记录删除前的状态
+            Log.d("DEBUG_DELETE", "Before delete - External moves: ${externalMoves.size}, Colors: ${externalUsedColors.size}")
+            Log.d("DEBUG_DELETE", "Trying to delete move with dbId: ${move.dbId}, name: ${move.name}")
 
             AlertDialog.Builder(context)
                 .setTitle("Confirm Delete")
@@ -1278,31 +920,31 @@ class MoveDialogManager(
                     val success = dbHelper.deleteAction(move.dbId!!)
 
                     if (success) {
+                        Log.d("DEBUG_DELETE", "Database deletion successful")
+
+                        categories = dbHelper.getAllCategories()
+
+                        val actionsMap = mutableMapOf<Int, List<Action>>()
+                        categories.forEach { category ->
+                            actionsMap[category.id] = dbHelper.getActionsByCategory(category.id)
+                        }
+                        actionsByCategory = actionsMap
+
+                        loadCategoryMoves(tabView)
+                        syncExternalCollections()
+
+                        Log.d("DEBUG_DELETE", "After sync - External moves: ${externalMoves.size}")
+
+
                         Toast.makeText(context, "Move deleted successfully", Toast.LENGTH_SHORT).show()
 
-                        // 直接刷新UI，不需要完全重新加载
-                        val recyclerView = tabView.findViewById<RecyclerView>(R.id.recyclerViewCategoryMoves)
 
-                        // 获取当前的数据集和适配器
-                        val adapter = recyclerView.adapter as? MovesAdapter
-                        if (adapter != null) {
-                            // 找到被删除的项目在当前列表中的位置
-                            val position = adapter.getPositionById(move.dbId!!)
-                            if (position >= 0) {
-                                // 从适配器的数据集中移除该项
-                                adapter.removeItem(position)
-                                // 通知适配器项目被移除
-                                adapter.notifyItemRemoved(position)
-                            }
-                        }
-
-                        // 更新外部列表
-                        loadSelectedMovesToExternal()
-
-                        // 同时更新类别数据（可能会影响类别页面的动作计数）
                         val parentDialog = getAlertDialogFromView(tabView)
                         if (parentDialog != null) {
+
                             loadCategories(getTabViewByIndex(parentDialog, 0))
+
+                            loadCategoryMoves(tabView)
                         }
                     } else {
                         Toast.makeText(context, "Failed to delete move", Toast.LENGTH_SHORT).show()
@@ -1313,11 +955,41 @@ class MoveDialogManager(
                 .show()
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in delete move confirm dialog", e)
+            Log.e("DEBUG_DELETE", "Error in delete move confirm dialog", e)
         }
     }
 
-    // 根据索引获取标签页视图
+    private fun syncExternalCollections() {
+        if (selectedCategoryId == -1) return
+
+        Log.d("DEBUG_SYNC", "Syncing external collections for category: $selectedCategoryId")
+
+
+        val actions = actionsByCategory[selectedCategoryId] ?: emptyList()
+
+
+        externalMoves.clear()
+        externalUsedColors.clear()
+        externalCategoryId.clear()
+        externalCategoryId.add(selectedCategoryId)
+        actions.forEach { action ->
+            val move = Move(
+                name = action.name,
+                color = action.color,
+                dbId = action.id,
+                // 其他属性使用默认值
+                isTrained = false,
+                isCollected = false
+            )
+            externalMoves.add(move)
+            externalUsedColors.add(action.color)
+        }
+
+        Log.d("DEBUG_SYNC", "Sync complete - External moves: ${externalMoves.size}")
+    }
+
+
+    // Get tab view by index
     private fun getTabViewByIndex(dialog: AlertDialog, index: Int): View {
         return when (index) {
             0 -> dialog.findViewById<FrameLayout>(R.id.categoriesContainer).getChildAt(0)
@@ -1326,7 +998,9 @@ class MoveDialogManager(
         }
     }
 
-    // 修改后的CategoryAdapter实现
+
+
+    // Modified CategoryAdapter implementation
     inner class CategoryAdapter(
         private val categories: List<Category>,
         private val onSelectClick: (Category) -> Unit,
@@ -1351,40 +1025,41 @@ class MoveDialogManager(
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val category = categories[position]
 
-            // 设置类别名称
+            // Set category name
             holder.tvCategoryName.text = category.name
 
-            // 设置动作数量
+            // Set move count
             val moveCount = actionsByCategory[category.id]?.size ?: 0
             holder.moveCount.text = "$moveCount moves"
 
-            // 使用不同的背景资源来区分选中项
+            // Use different background resource to distinguish selected item
             if (category.id == selectedCategoryId) {
                 holder.itemView.setBackgroundResource(R.drawable.selected_category_item_background)
             } else {
                 holder.itemView.setBackgroundResource(R.drawable.category_item_background)
             }
 
-            // 设置按钮点击事件
+            // Set button click events
             holder.btnSelect.setOnClickListener {
-                // 记录旧的选中位置
+                // Record old selected position
                 val oldSelectedPosition = categories.indexOfFirst { it.id == selectedCategoryId }
 
-                // 更新选中状态
+                // Update selection state
                 selectedCategoryId = category.id
                 selectedCategoryName = category.name
 
-                // 自动加载到外部列表
+                // Automatically load to external list
                 loadSelectedMovesToExternal()
 
-                // 通知适配器更新特定项，而不是整个列表
+                // Notify adapter to update specific items, not the entire list
                 if (oldSelectedPosition >= 0) {
                     notifyItemChanged(oldSelectedPosition)
                 }
                 notifyItemChanged(position)
 
-                // 切换到动作标签页
+                // Switch to moves tab
                 onSelectClick(category)
+                syncExternalCollections()
             }
 
             holder.btnEdit.setOnClickListener { onEditClick(category) }
@@ -1393,10 +1068,9 @@ class MoveDialogManager(
 
         override fun getItemCount(): Int = categories.size
 
-        // 添加此方法，防止视图重用导致的问题
+        // Add this method to prevent view reuse issues
         override fun getItemViewType(position: Int): Int {
             return position
         }
     }
 }
-
