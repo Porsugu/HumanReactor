@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 //        enableEdgeToEdge()
 
         // get the useage of the buttin
-//        val goToMotionButton = findViewById<Button>(R.id.custom_btn)a
+//        val goToMotionButton = findViewById<Button>(R.id.custom_btn)
 //
 //        val goAIQuestionActivityButton = findViewById<Button>(R.id.ai_question_btn)
 
