@@ -45,7 +45,7 @@ class LoadingActivity: AppCompatActivity() {
                 Log.d(TAG, "startParsingTask: 舊數據已清空")
 
 
-                // 更新UI顯示狀態
+                // 更新UI顯示狀態hi
                 updateStatus("正在載入測驗題目...")
 
                 // 在後台線程中執行文本讀取和解析
