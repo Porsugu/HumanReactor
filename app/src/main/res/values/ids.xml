@@ -2,4 +2,6 @@
 <resources>
     <item name="ai_question_10q" type="id" />
     <item name="ai_question_15q" type="id" />
+    <item name="setBTN" type="id" />
+    <item name="greetingText" type="id" />
 </resources>
