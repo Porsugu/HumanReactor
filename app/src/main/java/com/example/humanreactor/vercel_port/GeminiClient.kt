@@ -20,7 +20,7 @@ class GeminiClient(private val baseUrl: String) {
 
     // API接口定义
     private interface GeminiApiService {
-        @POST("api/gemini.js")
+        @POST("api/gemini_flexible.js")
         suspend fun generateContent(@Body request: GeminiRequest): Response<GeminiResponse>
     }
 

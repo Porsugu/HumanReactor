@@ -59,7 +59,7 @@ class MoveDialogManager(
                 .setView(dialogView)
                 .setCancelable(true)
                 .create()
-            dialog.window?.setBackgroundDrawableResource(R.drawable.big_frame_wbg)
+            dialog.window?.setBackgroundDrawableResource(R.drawable.msg_window_bg)
 
             dialog.setOnDismissListener {
                 dismissListener?.onDialogDismissed()
@@ -347,7 +347,6 @@ class MoveDialogManager(
                 )
             }.toMutableList()
 
-            // 使用全新的适配器实例，避免可能的状态问题
             val adapter = MovesAdapter(
                 categoryMoves,
                 onEditClick = { position, move ->
@@ -362,11 +361,9 @@ class MoveDialogManager(
                 }
             )
 
-            // 设置新的适配器
             recyclerView.adapter = adapter
             recyclerView.layoutManager = LinearLayoutManager(context)
 
-            // 延迟一帧后再次刷新，确保完全渲染
             recyclerView.post {
                 adapter.notifyDataSetChanged()
                 recyclerView.invalidate()
@@ -610,8 +607,9 @@ class MoveDialogManager(
 
             // Available colors
             val allColors = listOf(
-                Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
+                Color.parseColor("#F4A261"), Color.GREEN, Color.BLUE, Color.YELLOW,
                 Color.CYAN,
+//                ,Color.RED
 //                Color.MAGENTA, Color.GRAY, Color.BLACK,
 //                Color.rgb(255, 165, 0), Color.rgb(128, 0, 128),
 //                Color.rgb(165, 42, 42), Color.rgb(0, 128, 0),

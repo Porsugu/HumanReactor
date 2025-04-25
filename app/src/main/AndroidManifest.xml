@@ -3,10 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature
@@ -23,6 +23,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HumanReactor"
         tools:targetApi="31">
+        <activity
+            android:name=".statActivity.PerformanceDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".statActivity.CategorySelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".statActivity.StatActivity"
+            android:exported="false" />
         <activity
             android:name=".exampleActivity"
             android:exported="false" />

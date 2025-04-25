@@ -110,7 +110,7 @@
             android:layout_width="wrap_content"
             android:layout_height="150dp"
             android:layout_marginBottom="20dp"
-            android:background="@drawable/big_frame_wbg"
+            android:background="@drawable/msg_window_bg"
             android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/btmBar"
             app:layout_constraintEnd_toEndOf="parent"

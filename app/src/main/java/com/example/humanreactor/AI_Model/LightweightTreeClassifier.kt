@@ -13,11 +13,11 @@ import kotlin.random.Random
  * - Requires minimal parameter tuning, easy to implement and optimize
  */
 class LightweightTreeClassifier(
-    private var confidenceThreshold: Float = 0.90f,
-    private val numTrees: Int = 20,                // Number of decision trees
+    private var confidenceThreshold: Float = 0.9f,
+    private val numTrees: Int = 50,                // Number of decision trees
     private val maxDepth: Int = 10,                // Maximum tree depth
     private val minSamplesPerLeaf: Int = 3,        // Minimum samples per leaf
-    private val featureSamplingRatio: Float = 0.7f // Feature sampling ratio
+    private val featureSamplingRatio: Float = 0.5f // Feature sampling ratio
 ) {
     companion object {
         private const val TAG = "LightweightTreeClassifier"
