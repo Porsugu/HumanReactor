@@ -1,6 +1,10 @@
 package com.example.humanreactor
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -36,6 +40,9 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
 
         sharedPrefManager = SharedPrefManager(this)
 
+        // Check internet connectivity and update UI accordingly
+        updateLanguageButtonsBasedOnConnectivity()
+
 
         // set click listener for next button
         next_btn.setOnClickListener {
@@ -45,8 +52,8 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
                 val selectedOptionText = when (selectedOption) {
                     english_btn -> "english"
                     // will open it later
-//                    chinese_btn -> "chinese"
-//                    japanse_btn -> "japanese"
+                    chinese_btn -> "traditional chinese"
+                    japanse_btn -> "japanese"
                     else -> ""
                 }
 
@@ -67,6 +74,57 @@ class QuickThinkerActivity :AppCompatActivity(), View.OnClickListener {
         }
 
     } // end of onCreate function
+
+    // Function to check internet connectivity
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+
+            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
+        } else {
+            // For devices running Android versions below M
+            @Suppress("DEPRECATION")
+            val networkInfo = connectivityManager.activeNetworkInfo
+            @Suppress("DEPRECATION")
+            return networkInfo != null && networkInfo.isConnected
+        }
+    }
+
+    // Function to update buttons based on connectivity
+    private fun updateLanguageButtonsBasedOnConnectivity() {
+        if (isNetworkAvailable()) {
+            // Enable Chinese and Japanese buttons if internet is available
+            chinese_btn.visibility = View.VISIBLE
+            japanse_btn.visibility = View.VISIBLE
+            chinese_btn.isEnabled = true
+            japanse_btn.isEnabled = true
+        } else {
+            // Disable or hide Chinese and Japanese buttons if no internet, hide the buttons completely
+            chinese_btn.visibility = View.GONE
+            japanse_btn.visibility = View.GONE
+
+            // Reset selection if either Chinese or Japanese was selected
+            if (selectedOption == chinese_btn || selectedOption == japanse_btn) {
+                selectedOption = null
+                chinese_btn.isSelected = false
+                japanse_btn.isSelected = false
+                next_btn.isEnabled = false
+                next_btn.isClickable = false
+            }
+
+            // Show a message to the user
+            Toast.makeText(
+                this,
+                "Chinese and Japanese options require internet connection",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     // to set the items to be on click
     override fun onClick(view: View) {

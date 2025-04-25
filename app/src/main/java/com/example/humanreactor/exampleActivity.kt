@@ -67,6 +67,7 @@ class exampleActivity : AppCompatActivity() {
                 // 获取响应文本
                 val response = getGeminiResponseText(prompt)
 
+
                 // 更新UI显示响应
                 resultTextView.text = response
             } finally {
@@ -103,6 +104,6 @@ class exampleActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "exampleActivity"
+        const val TAG = "exampleActivity"
     }
 }
