@@ -5,7 +5,10 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -14,17 +17,23 @@ import androidx.lifecycle.lifecycleScope
 import com.example.humanreactor.R
 import com.example.humanreactor.exampleActivity
 import com.example.humanreactor.vercel_port.GeminiClient
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+
 
 class LoadingActivity: AppCompatActivity() {
 
     private lateinit var progressBar: ProgressBar
     private lateinit var statusText: TextView
+    private lateinit var percentageText: TextView
+    private var progressStatus = 0
+    private val handler: Handler = Handler(Looper.getMainLooper())
+    private val showPercentage = true // Set to true if you want to show percentage text
+
 
     private lateinit var language: String
     private var num : Int = 0
@@ -49,11 +58,21 @@ class LoadingActivity: AppCompatActivity() {
 
         progressBar = findViewById(R.id.progressBar)
         statusText = findViewById(R.id.statusText)
+        percentageText = findViewById(R.id.percentageText)
+
+        if (showPercentage) {
+            percentageText.visibility = View.VISIBLE
+        }
 
         startParsingTask()
     }
 
     private fun startParsingTask() {
+
+        // Reset progress
+        progressStatus = 0
+        progressBar.progress = 0
+
         lifecycleScope.launch {
             try {
 
@@ -61,16 +80,18 @@ class LoadingActivity: AppCompatActivity() {
                 clearExistingData()
 
                 // check the wifi connecting status
+                updateStatus(5, "Checking internet connection...")
                 val isWifiConnected = isWifiConnected()
                 Log.d(TAG, "loadData: WiFi連接狀態: ${if (isWifiConnected) "已連接" else "未連接"}")
 
                 if (isWifiConnected) {
-                    // 使用在線API
-                    updateStatus("正在從在線API獲取數據...")
+                    // using online API
+                    updateStatus(10,"Getting data from the online API")
+//                    updateStatus("正在從在線API獲取數據...")
                     fetchDataFromApi()
                 } else {
-                    // 使用本地數據庫
-                    updateStatus("無WiFi連接，使用本地數據...")
+                    // using local data
+                    updateStatus(10,"No wifi connection, using local data")
                     loadDataFromLocalDatabase()
                 }
             }
@@ -86,7 +107,7 @@ class LoadingActivity: AppCompatActivity() {
     } // start parsing function end
 
     private suspend fun clearExistingData(){
-        updateStatus("正在清空舊數據...")
+        updateStatus(1, "Clearing the old data")
         Log.d(TAG, "startParsingTask: 開始清空舊數據")
         withContext(Dispatchers.IO) {
             QuizParser.clearQuizListFromPrefs(this@LoadingActivity)
@@ -98,7 +119,7 @@ class LoadingActivity: AppCompatActivity() {
     private suspend fun fetchDataFromApi(){
         try {
             Log.d(TAG, "fetchDataFromApi: 開始從API獲取數據")
-            updateStatus("正在連接服務器...")
+            updateStatus(20, "正在連接服務器...")
 
             // preparing the prompt for the code
             var prompt = "make $num questions about [$category]'s quiz question, each of the question has " +
@@ -118,20 +139,24 @@ class LoadingActivity: AppCompatActivity() {
                 prompt = prompt + "please give all the questions in $language only, no english please"
             }
 
+            updateStatus(30, "Generating Questions...")
+
             // use the process prompt logic to get the Gemini reaction
             val response = getGeminiResponseText(prompt)
 
-            // prase gemini's text into quiz type list
+            updateStatus(60, "Dealing with the response...")
+
+            // parase gemini's text into quiz type list
             val quizList = QuizParser.parseQuizFromText(response)
 
             // 保存到SharedPreferences
-            updateStatus("解析完成，正在保存...")
+            updateStatus(80, "Finish analysing, now saving...")
 
             withContext(Dispatchers.IO) {
                 QuizParser.saveQuizListToPrefs(this@LoadingActivity, quizList)
             }
 
-            updateStatus("測驗題目生成完成！")
+            updateStatus(100, "測驗題目生成完成！")
              //等待一段時間後跳轉到主頁面
                 withContext(Dispatchers.Main) {
                     // 延遲500毫秒，讓用戶看到"完成"狀態
@@ -167,10 +192,12 @@ class LoadingActivity: AppCompatActivity() {
     private suspend fun loadDataFromLocalDatabase(){
 
         try{
-            // 更新UI顯示狀態hi
-                updateStatus("正在載入測驗題目...")
+            // update UI showing status
+            updateStatus(20, "正在載入測驗題目...")
 
-                // 在後台線程中執行文本讀取和解析
+
+
+            // 在後台線程中執行文本讀取和解析
                 val quizList = withContext(Dispatchers.IO) {
                     // get the text from raw file sets
                     var content = ""
@@ -181,19 +208,21 @@ class LoadingActivity: AppCompatActivity() {
                         content = readTextFromRawResource(R.raw.relationship_question)
                     }
                     // 解析文本到QuizType列表
+                    // 更新UI顯示進度
+                    updateStatus(40, "正在解析問題...")
                     QuizParser.parseQuizFromText(content)
                 }
 
-                // 更新UI顯示進度
-                updateStatus("解析完成，正在保存...")
+                updateStatus(80, "解析完成，正在保存...")
 
                 // 保存解析的數據到SharedPreferences
                 withContext(Dispatchers.IO) {
                     QuizParser.saveQuizListToPrefs(this@LoadingActivity, quizList)
                 }
 
-                // 更新UI顯示完成狀態
-                updateStatus("完成！")
+            // 更新UI顯示完成狀態
+            updateStatus(100, "完成！")
+
 
                 // 等待一段時間後跳轉到主頁面
                 withContext(Dispatchers.Main) {
@@ -209,9 +238,15 @@ class LoadingActivity: AppCompatActivity() {
             }
     } // end of loadDataFromLocalDatabase function
 
-    private fun updateStatus(status: String) {
-        lifecycleScope.launch(Dispatchers.Main) {
+    private suspend fun updateStatus(progress:Int, status: String) {
+        withContext(Dispatchers.Main) {
+            progressStatus = progress
+            progressBar.progress = progress
             statusText.text = status
+
+            if (showPercentage) {
+                percentageText.text = "$progress%"
+            }
         }
     }
 
