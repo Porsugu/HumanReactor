@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.humanreactor.QuickThinker.OptionAdapter
 import com.example.humanreactor.R
 
 class SelectTypeAcitivity : AppCompatActivity() {
@@ -32,16 +33,16 @@ class SelectTypeAcitivity : AppCompatActivity() {
         nextButton.isEnabled = false
 
         // set up question type options with language changes
-        val questionTypeOption = getQuestionTypeOptions()
+//        val questionTypeOption = getQuestionTypeOptions()
 
-        questionTypeAdapter = OptionAdapter(questionTypeOption){_, selectedOption ->
-            // update data class with selection
-            DataManager.selectionData.question_type = selectedOption
-            questionTypeSelected = true
-
-            // Check if both selections are made
-            checkEnableNextButton(nextButton)
-        }
+//        questionTypeAdapter = OptionAdapter(questionTypeOption){_, selectedOption ->
+//            // update data class with selection
+////            DataManager.selectionData.question_type = selectedOption
+//            questionTypeSelected = true
+//
+//            // Check if both selections are made
+//            checkEnableNextButton(nextButton)
+//        }
 
         // set up question type RecyclerView
         typeRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -53,7 +54,7 @@ class SelectTypeAcitivity : AppCompatActivity() {
 
         questionNumAdapter = OptionAdapter(questionNumOption){_, selectedOption ->
             // update data class with selection
-            DataManager.selectionData.question_number = selectedOption.toInt()
+//            DataManager.selectionData.question_number = selectedOption.toInt()
             questionNumSelected = true
 
             //check if both selections are made
@@ -76,13 +77,13 @@ class SelectTypeAcitivity : AppCompatActivity() {
     }
 
     // getting the language type of the questions
-    private fun getQuestionTypeOptions() : List<String>{
-        return when(DataManager.selectionData.language){
-            "中文"-> listOf("面試","情侶關係")
-            "English"-> listOf("Interview", "X crash car in relationship")
-            else -> listOf("Nothing", "Nothing")
-        }
-    }
+//    private fun getQuestionTypeOptions() : List<String>{
+//        return when(DataManager.selectionData.language){
+//            "中文"-> listOf("面試","情侶關係")
+//            "English"-> listOf("Interview", "X crash car in relationship")
+//            else -> listOf("Nothing", "Nothing")
+//        }
+//    }
 
     // updating the text language of the UI
     private fun updateUILanguage(){
@@ -91,25 +92,25 @@ class SelectTypeAcitivity : AppCompatActivity() {
         val typeTextView = findViewById<TextView>(R.id.ai_question_type_choose_txt)
         val numTextView = findViewById<TextView>(R.id.ai_question_num_choose_txt)
 
-        when (DataManager.selectionData.language){
-            "中文"-> {
-                typeTextView.text = "請選擇題目類型"
-                numTextView.text = "請選擇題目數量"
-            }
-            "English" -> {
-                typeTextView.text = "Please choose the type you would like to challenge"
-                numTextView.text = "Please choose the amount of questions"
-            }
-        }
+//        when (DataManager.selectionData.language){
+//            "中文"-> {
+//                typeTextView.text = "請選擇題目類型"
+//                numTextView.text = "請選擇題目數量"
+//            }
+//            "English" -> {
+//                typeTextView.text = "Please choose the type you would like to challenge"
+//                numTextView.text = "Please choose the amount of questions"
+//            }
+//        }
     }
 
     // update the button text language
     private fun updateButtonText(button: Button){
-        when (DataManager.selectionData.language){
-            "中文" -> button.text = "開始"
-            "English" -> "Start"
-            else -> button.text = "HI"
-        }
+//        when (DataManager.selectionData.language){
+//            "中文" -> button.text = "開始"
+//            "English" -> "Start"
+//            else -> button.text = "HI"
+//        }
     }
 
 

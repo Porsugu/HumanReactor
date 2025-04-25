@@ -15,8 +15,13 @@ class DataRepository (private val context: Context) {
     }
 
     /**
-     * check if there has any wifi connection
+     * Loads quiz data from local assets and/or remote sources
+     *
+     * @param useLocalOnly If true, only loads from local assets, otherwise may attempt to fetch from remote
+     * @param progressCallback Callback to report loading progress and status messages
+     * @return List of parsed quiz questions
      */
+
     private fun isWifiConnected(context: Context): Boolean{
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE)as ConnectivityManager
 

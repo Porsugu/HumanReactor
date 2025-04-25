@@ -72,8 +72,8 @@ class QuickThinkerQuestionType:AppCompatActivity(), View.OnClickListener {
             sharedPrefManager.saveCategory(selectedOptionType)
             sharedPrefManager.saveNumber(selectedOptionNumber.toInt())
             // if it is clicked,  go to the next class, the main running class
-//            val intent = Intent(this, QuickThinkerQuestionType::class.java)
-//            startActivity(intent)
+            val intent = Intent(this, LoadingActivity::class.java)
+            startActivity(intent)
         }
 
 

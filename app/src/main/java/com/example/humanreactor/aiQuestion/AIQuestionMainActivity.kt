@@ -115,25 +115,25 @@ class AIQuestionMainActivity : AppCompatActivity() {
         val closeButton = dialogView.findViewById<Button>(R.id.dialog_close_button)
 
 
-        // changing language of the dialog
-        if(DataManager.selectionData.language == "中文"){
-
-            if (isCorrect) {
-                titleTextView.text = "答對了！"
-
-            } else {
-                titleTextView.text = "答错了！正确答案是: $correctAnswer"
-            }
-
-            closeButton.text = "關閉"
-        }else {
-            if (isCorrect) {
-                titleTextView.text = "Well Done！"
-
-            } else {
-                titleTextView.text = "Opps！Correct Ans: $correctAnswer"
-            }
-        }
+//        // changing language of the dialog
+//        if(DataManager.selectionData.language == "中文"){
+//
+//            if (isCorrect) {
+//                titleTextView.text = "答對了！"
+//
+//            } else {
+//                titleTextView.text = "答错了！正确答案是: $correctAnswer"
+//            }
+//
+//            closeButton.text = "關閉"
+//        }else {
+//            if (isCorrect) {
+//                titleTextView.text = "Well Done！"
+//
+//            } else {
+//                titleTextView.text = "Opps！Correct Ans: $correctAnswer"
+//            }
+//        }
         // setting the explanation of the answer
         explanationTextView.text = correctAnswerExplanation
 
@@ -167,59 +167,59 @@ class AIQuestionMainActivity : AppCompatActivity() {
         )
 
         var prompt = " "
-
-        if(DataManager.selectionData.language == "中文") {
-            prompt =
-                "我需要一個關於" + DataManager.selectionData.question_type + "的問題，請按照以下要求：\n"+
-                        "    1. 問題本身要刁鑽但簡潔，20字以內,，也不能太複雜令我可以在五秒内作答，\n" +
-                        "    2. 提供4個選項（A、B、C、D）， 選項需要15字以内\n" +
-                        "    3. 只有一個選項是100%正確的，其他選項要看起來合理但不完全正確\n" +
-                        "    4. 正確選項應該代表最有價值的答案\n" +
-                        "    5. 請明確標明哪個是正確答案（例如：「正確答案：C」）\n" +
-                        "    6. 請將問題與選項分開呈現，格式如下：\n" +
-                        "問題：[問題文字]\n" +
-                        "A. [選項A]\n" +
-                        "B. [選項B]\n" +
-                        "C. [選項C]\n" +
-                        "D. [選項D]\n" +
-                        "正確答案：[A/B/C/D], 【答案解釋】"
-        }
-        else{
-            prompt =
-                "I need a question about " + DataManager.selectionData.question_type + ", please follow these requirements: \n"+
-                        "1. The question should be tricky but concise, within 20 characters, and not too complex so I can answer it within five seconds, \n" +
-                        "2. Provide 4 options (A, B, C, D)\n" +
-                        "3. Only one option should be 100% correct, other options should look reasonable but not completely correct\n"+
-                        "4. The correct option should represent the most valuable answer\n" +
-                        "5. Please clearly indicate which is the correct answer (e.g., Correct answer: C)\n"+
-                        "6. For each incorrect option, please explain why\n" +
-                        "7. Please present the question and options separately, in the following format:\n"+
-                        "Question: [question text]\n" +
-                        "A. [option A]\n" +
-                        "B. [option B]\n"+
-                        "C. [option C]\n" +
-                        "D. [option D]\n" +
-                        "Correct answer: [A/B/C/D], Explanation for incorrect answers "
-
-        }
-
-        // resolving the concerancy issue using main scope
-        MainScope().launch{
-
-            try{
-                val response = generativeModel.generateContent(prompt)
-                savedQuestion = response.text?:"cannot generate the question"
-
-                // analyse the repsonse from ai, and separate the questions and options
-                parseResponseAndDisplayOptions(savedQuestion)
-            }
-            catch (e: Exception) {
-                Log.e("MODEL_ERROR", "there are error while generating the qeustion", e)
-                questionTextView.text = "error while generating: ${e.message}"
-            }
-//            savedQuestion = response.toString()
-//            questionTextView.text = response.text
-        }
+//
+//        if(DataManager.selectionData.language == "中文") {
+//            prompt =
+//                "我需要一個關於" + DataManager.selectionData.question_type + "的問題，請按照以下要求：\n"+
+//                        "    1. 問題本身要刁鑽但簡潔，20字以內,，也不能太複雜令我可以在五秒内作答，\n" +
+//                        "    2. 提供4個選項（A、B、C、D）， 選項需要15字以内\n" +
+//                        "    3. 只有一個選項是100%正確的，其他選項要看起來合理但不完全正確\n" +
+//                        "    4. 正確選項應該代表最有價值的答案\n" +
+//                        "    5. 請明確標明哪個是正確答案（例如：「正確答案：C」）\n" +
+//                        "    6. 請將問題與選項分開呈現，格式如下：\n" +
+//                        "問題：[問題文字]\n" +
+//                        "A. [選項A]\n" +
+//                        "B. [選項B]\n" +
+//                        "C. [選項C]\n" +
+//                        "D. [選項D]\n" +
+//                        "正確答案：[A/B/C/D], 【答案解釋】"
+//        }
+//        else{
+//            prompt =
+//                "I need a question about " + DataManager.selectionData.question_type + ", please follow these requirements: \n"+
+//                        "1. The question should be tricky but concise, within 20 characters, and not too complex so I can answer it within five seconds, \n" +
+//                        "2. Provide 4 options (A, B, C, D)\n" +
+//                        "3. Only one option should be 100% correct, other options should look reasonable but not completely correct\n"+
+//                        "4. The correct option should represent the most valuable answer\n" +
+//                        "5. Please clearly indicate which is the correct answer (e.g., Correct answer: C)\n"+
+//                        "6. For each incorrect option, please explain why\n" +
+//                        "7. Please present the question and options separately, in the following format:\n"+
+//                        "Question: [question text]\n" +
+//                        "A. [option A]\n" +
+//                        "B. [option B]\n"+
+//                        "C. [option C]\n" +
+//                        "D. [option D]\n" +
+//                        "Correct answer: [A/B/C/D], Explanation for incorrect answers "
+//
+//        }
+//
+//        // resolving the concerancy issue using main scope
+//        MainScope().launch{
+//
+//            try{
+//                val response = generativeModel.generateContent(prompt)
+//                savedQuestion = response.text?:"cannot generate the question"
+//
+//                // analyse the repsonse from ai, and separate the questions and options
+//                parseResponseAndDisplayOptions(savedQuestion)
+//            }
+//            catch (e: Exception) {
+//                Log.e("MODEL_ERROR", "there are error while generating the qeustion", e)
+//                questionTextView.text = "error while generating: ${e.message}"
+//            }
+////            savedQuestion = response.toString()
+////            questionTextView.text = response.text
+//        }
 
     }
 

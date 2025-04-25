@@ -1,4 +1,4 @@
-package com.example.humanreactor.aiQuestion
+package com.example.humanreactor.QuickThinker
 
 import android.view.LayoutInflater
 import android.view.View
