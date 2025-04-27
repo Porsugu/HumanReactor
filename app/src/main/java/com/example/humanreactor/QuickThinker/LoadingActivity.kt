@@ -122,21 +122,22 @@ class LoadingActivity: AppCompatActivity() {
             updateStatus(20, "正在連接服務器...")
 
             // preparing the prompt for the code
-            var prompt = "make $num questions about [$category]'s quiz question, each of the question has " +
-                    "4 options，please give me the correct answer and explanation. The question should be tricky " +
-                    "but concise, within 20 characters, and not too complex so I can answer it within five seconds,Here is a format you must have to follow" +
-                    "*Question ( it should not be over 10 -15 words\n" +
-                    "1. Option 1\n" +
-                    "2. Option 2\n" +
-                    "3. Option 3\n" +
-                    "4. Option 4\n" +
-                    "-(Correct Answer)\n" +
-                    "+(Explanation)\n"
-
-            Log.e(TAG, "the language here is $language")
+            var prompt = "Please generate $num quiz questions about $category, each with 4 options. Questions should be clever but concise, not exceeding 20 characters, moderately difficult so they can be answered within 10 seconds." +
+                    "Strictly follow this exact format for each question without adding any additional text, headings, or explanations." +
+                    "Correct Sentence means people are good at answering questions about $category, with not more than 6 words and something encouraging,it should refer to the question." +
+                    "Wrong Sentence means to laugh at people who are not manage to answer the ${category }question correctly in a humour way with not more than 6 words, it should refer to the question.:"+
+            "*Question\n"+
+            "1. Option 1\n"+
+            "2. Option 2\n"+
+            "3. Option 3\n"+
+            "4. Option 4\n"+
+            "-Correct answer number\n"+
+            "+Explanation\n"+
+            "@Correct Sentence\n"+
+            "#Wrong Sentence\n"
 
             if(language != "english"){
-                prompt = prompt + "please give all the questions in $language only, no english please"
+                prompt = prompt + "All content must be in $language only, without any English text. Follow this format precisely, do not add any subheadings like 'Question', 'Options', 'Correct Answer', etc."
             }
 
             updateStatus(30, "Generating Questions...")

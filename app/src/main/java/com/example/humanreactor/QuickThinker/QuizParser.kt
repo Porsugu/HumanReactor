@@ -7,8 +7,10 @@ import com.google.gson.reflect.TypeToken
 data class QuizType (
     var question: String,
     val option: List<String>,
-    val correctAnswerIndex: String,
-    val explanation: String
+    val correctAnswerIndex: Int,
+    val explanation: String,
+    val correctSentence  : String,
+    val wrongSentences : String
 )
 
 class QuizParser{
@@ -31,6 +33,8 @@ class QuizParser{
             var currentOptions = mutableListOf<String>()
             var currentCorrectAnswer = ""
             var currentExplanation = ""
+            var currentcorrectSentence  = ""
+            var currentwrongSentence = ""
             var parsingState = ParsingState.NONE
 
             for(line in lines){
@@ -49,8 +53,10 @@ class QuizParser{
                                 QuizType(
                                     question = currentQuestion.trim(),
                                     option = currentOptions.toList(),
-                                    correctAnswerIndex = currentCorrectAnswer.trim(),
-                                    explanation = currentExplanation.trim()
+                                    correctAnswerIndex = currentCorrectAnswer.trim().toInt(),
+                                    explanation = currentExplanation.trim(),
+                                    correctSentence = currentcorrectSentence.trim(),
+                                    wrongSentences  = currentwrongSentence.trim()
                                 )
                             )
                         } // end of if statement
@@ -60,6 +66,8 @@ class QuizParser{
                         currentOptions = mutableListOf()
                         currentCorrectAnswer = ""
                         currentExplanation = ""
+                        currentcorrectSentence  = ""
+                        currentwrongSentence = ""
                         parsingState = ParsingState.QUESTION
                     } // end of trimmed line
 
@@ -85,12 +93,29 @@ class QuizParser{
                         parsingState = ParsingState.EXPLANATION
                     }
 
+                    trimmedLine.startsWith("@") ->{
+                        currentcorrectSentence = trimmedLine.substring(1).trim()
+                        parsingState = ParsingState.CORRECT
+                    }
+
+                    trimmedLine.startsWith("#") -> {
+                        currentwrongSentence = trimmedLine.substring(1).trim()
+                    }
+
                     parsingState == ParsingState.QUESTION -> {
                         currentQuestion += " " + trimmedLine
                     }
 
                     parsingState == ParsingState.EXPLANATION -> {
                         currentExplanation += " " + trimmedLine
+                    }
+
+                    parsingState == ParsingState.CORRECT ->{
+                        currentCorrectAnswer += " " + trimmedLine
+                    }
+
+                    parsingState == ParsingState.WRONG ->{
+                        currentwrongSentence += " " + trimmedLine
                     }
 
                 }
@@ -104,8 +129,11 @@ class QuizParser{
                     QuizType(
                         question = currentQuestion.trim(),
                         option = currentOptions.toList(),
-                        correctAnswerIndex = currentCorrectAnswer.trim(),
-                        explanation = currentExplanation.trim()
+                        correctAnswerIndex = currentCorrectAnswer.trim().toInt(),
+                        explanation = currentExplanation.trim(),
+                        correctSentence = currentcorrectSentence.trim(),
+                        wrongSentences  = currentwrongSentence.trim()
+
                     )
                 )
             } // end of the last question if
@@ -156,7 +184,7 @@ class QuizParser{
     } // end of companion object
 
     private enum class ParsingState {
-        NONE, QUESTION, OPTIONS, CORRECT_ANSWER, EXPLANATION
+        NONE, QUESTION, OPTIONS, CORRECT_ANSWER, EXPLANATION, CORRECT, WRONG
     }
 
 }

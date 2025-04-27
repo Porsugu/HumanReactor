@@ -60,11 +60,11 @@
 
     <RelativeLayout
         android:id="@+id/progressBarLayout"
-        android:layout_width="0dp"
+        android:layout_width="0sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="100dp"
-        android:layout_marginEnd="48dp"
+        android:layout_marginStart="48sp"
+        android:layout_marginTop="100sp"
+        android:layout_marginEnd="48sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/statusText"
         app:layout_constraintEnd_toEndOf="parent"
@@ -77,7 +77,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:layout_marginTop="-20dp"
+            android:layout_marginTop="-20sp"
             android:text="60%"
             android:textColor="#F4A460"
             android:textSize="12sp" />
