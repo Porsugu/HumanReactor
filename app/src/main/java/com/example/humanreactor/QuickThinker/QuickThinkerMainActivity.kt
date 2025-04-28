@@ -1,6 +1,7 @@
 package com.example.humanreactor.QuickThinker
 
 import android.content.ContentValues.TAG
+import android.content.Intent
 import android.nfc.Tag
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
 
-class QuickThinkerMainActivity:AppCompatActivity() {
+class QuickThinkerMainActivity:AppCompatActivity(), AnswerDialogFragment.OnNextQuestionListener {
 
     private lateinit var questionList : List<QuizType>
     private var currentQuestionIndex = 0
@@ -25,9 +26,8 @@ class QuickThinkerMainActivity:AppCompatActivity() {
     private var questionNumbers = 0
     private var answerTimes = mutableListOf<Long>()
     private var userAnswers = mutableListOf<Int>()
+    private var answerCorrectNum : Int = 0
     private lateinit var sharedPrefManager: SharedPrefManager
-
-    private lateinit var listofSuccess_Interview: List<String>
 
 
     private lateinit var questionTextView: TextView
@@ -154,26 +154,40 @@ class QuickThinkerMainActivity:AppCompatActivity() {
 
     private fun loadCurrentQuestion(){
 
-        if(currentQuestionIndex < questionNumbers){
+        if(currentQuestionIndex < questionNumbers  && ::questionList.isInitialized && questionList.isNotEmpty()){
 
-            val currentQuestion = questionList[currentQuestionIndex]
+           try{
+               val currentQuestion = questionList[currentQuestionIndex]
 
-            // setting the question text
-            questionTextView.text = "Q${currentQuestionIndex + 1} : ${currentQuestion.question}"
+               // setting the question text
+               questionTextView.text = "Q${currentQuestionIndex + 1} : ${currentQuestion.question}"
 
-            // setting the options with words
-            option1TextView.text = currentQuestion.option[0]
-            option2TextView.text = currentQuestion.option[1]
-            option3TextView.text = currentQuestion.option[2]
-            option4TextView.text = currentQuestion.option[3]
+               // setting the options with words
+               option1TextView.text = currentQuestion.option[0]
+               option2TextView.text = currentQuestion.option[1]
+               option3TextView.text = currentQuestion.option[2]
+               option4TextView.text = currentQuestion.option[3]
 
 
-            // setting the options with on click listener
-            option1Layout.setOnClickListener { handleOptionClick(1) }
-            option2Layout.setOnClickListener { handleOptionClick(2) }
-            option3Layout.setOnClickListener { handleOptionClick(3) }
-            option4Layout.setOnClickListener { handleOptionClick(4) }
+               // setting the options with on click listener
+               option1Layout.setOnClickListener { handleOptionClick(1) }
+               option2Layout.setOnClickListener { handleOptionClick(2) }
+               option3Layout.setOnClickListener { handleOptionClick(3) }
+               option4Layout.setOnClickListener { handleOptionClick(4) }
 
+               startTimer()
+           } catch (e : Exception){
+               Log.e(TAG, "Error loading question", e)
+               // Handle the error - maybe show a dialog and move to next question
+               currentQuestionIndex++
+               loadCurrentQuestion()
+           }
+
+
+        } else {
+
+            // going to another page that is showing the result of the activity
+            showQuizCompletedActivity()
         }
     }
 
@@ -194,7 +208,7 @@ class QuickThinkerMainActivity:AppCompatActivity() {
     private fun showCorrectAnswer() {
         val currentQuestion = questionList[currentQuestionIndex]
         val userChoice = userAnswers.lastOrNull() ?: -1
-        val correctChoice = currentQuestion.correctAnswerIndex.toInt()
+        val correctChoice = currentQuestion.correctAnswerIndex
 
         // prepare with the dialog class's nneed
         val timeUsed = answerTimes.lastOrNull() ?: timerDuration
@@ -203,6 +217,7 @@ class QuickThinkerMainActivity:AppCompatActivity() {
         var sentence_of_humour = ""
 
         if(userChoice == correctChoice){
+            answerCorrectNum ++
             sentence_of_humour = currentQuestion.correctSentence
         } else {
             sentence_of_humour = currentQuestion.wrongSentences
@@ -219,6 +234,29 @@ class QuickThinkerMainActivity:AppCompatActivity() {
 
     }
 
+    // Implement the OnNextQuestionListener interface
+    override fun onNextQuestion(){
+
+        // increment the question index
+        currentQuestionIndex ++
+
+        // load the next question or finish the quiz
+        if (currentQuestionIndex < questionNumbers){
+            loadCurrentQuestion()
+        } else {
+            showQuizCompletedActivity()
+        }
+    }
+
+    private fun showQuizCompletedActivity(){
+        sharedPrefManager.saveCorrectNumber(answerCorrectNum)
+        sharedPrefManager.saveTimeList(answerTimes)
+
+        Log.d(TAG, "Correct Number of question answered : $answerCorrectNum")
+        val intent = Intent(this, ResultActivity::class.java)
+        startActivity(intent)
+        finish() // 結束LoadingActivity，防止用戶按返回鍵回到此頁面
+    }
 
     /** Log functions : logQuizData()
      *  - to show the information in the log about the quiz list and track is there have any question there
@@ -271,7 +309,7 @@ class QuickThinkerMainActivity:AppCompatActivity() {
 
                 questionList = quizList
 
-                showStartQuizDialog()
+//                showStartQuizDialog()
 
                 loadCurrentQuestion()
 

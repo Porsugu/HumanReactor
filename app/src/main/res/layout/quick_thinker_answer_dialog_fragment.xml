@@ -83,10 +83,42 @@
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/language_english_BTN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:layout_constraintEnd_toStartOf="@+id/guideline2"
+        app:layout_constraintHorizontal_bias="0.836"
+        app:layout_constraintStart_toStartOf="@+id/guideline2"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout2">
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time used : "
+            android:textColor="@color/onMain"
+            android:textSize="20dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/dialog_time_used"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3.09 sec"
+            android:textColor="@color/onMain"
+            android:textSize="20dp"
+            app:layout_constraintStart_toEndOf="@+id/textView10"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/answer_dialog_description_box"
         android:layout_width="300dp"
         android:layout_height="240dp"
-        android:layout_marginTop="152dp"
+        android:layout_marginTop="128dp"
         android:background="@drawable/choossen_frame"
         android:clickable="false"
         android:focusable="false"
@@ -109,12 +141,15 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/dialog_next_BTN"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_marginStart="80dp"
         android:layout_marginEnd="80dp"
+        android:layout_marginBottom="36dp"
         android:background="@drawable/next_button_frame"
         android:clickable="false"
         android:enabled="false"
@@ -123,7 +158,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/language_english_BTN">
+        app:layout_constraintTop_toBottomOf="@+id/answer_dialog_description_box">
 
         <TextView
             android:layout_width="wrap_content"
@@ -137,7 +172,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline2"

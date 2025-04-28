@@ -1,16 +1,35 @@
 package com.example.humanreactor.QuickThinker
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.DialogFragment
 import com.example.humanreactor.R
 import org.w3c.dom.Text
 
 class AnswerDialogFragment : DialogFragment() {
+
+    private var onNextQuestionListener : OnNextQuestionListener?= null
+
+    // Interface for callback to activity
+    interface OnNextQuestionListener {
+        fun onNextQuestion()
+    }
+
+    override fun onAttach(context : Context){
+        super.onAttach(context)
+            // verify the host activity implements the callback interface
+        try{
+            onNextQuestionListener = context as OnNextQuestionListener
+        } catch (e : ClassCastException){
+            throw ClassCastException("$context must implement OnNextQuestionListener")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,18 +50,27 @@ class AnswerDialogFragment : DialogFragment() {
             view.findViewById<TextView>(R.id.dialog_topic).text = "Oppsie Wrong"
         }
         view.findViewById<TextView>(R.id.sentence_of_humour).text = humour
+        view.findViewById<TextView>(R.id.dialog_correct_answer).text = correct_choice.toString()
         view.findViewById<TextView>(R.id.quick_thinker_explanation).text = explanation
+        view.findViewById<TextView>(R.id.dialog_time_used).text = String.format("%.2f sec", time_used)
+        val dialog_nextButton = view.findViewById<ConstraintLayout>(R.id.dialog_next_BTN)
+
+        // setting next button onClickListener
+        dialog_nextButton.setOnClickListener {
+
+            Log.d("Dialog", "Next question is clicked")
+            dismiss()
+            onNextQuestionListener?.onNextQuestion()    // call the callback method
+        }
 
 
         return view
     }
 
-    override fun onCreate (savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-
-    }
+//    override fun onCreate (savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//
+//    }
 
     override fun onResume() {
         super.onResume()

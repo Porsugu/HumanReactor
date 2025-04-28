@@ -54,6 +54,9 @@
             android:name=".QuickThinker.QuickThinkerMainActivity"
             android:exported="false" />
         <activity
+            android:name=".QuickThinker.ResultActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
