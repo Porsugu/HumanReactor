@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 //        enableEdgeToEdge()
 
-        // get the useage of the buttin
+        // get the usage of the button
 //        val goToMotionButton = findViewById<Button>(R.id.custom_btn)
 //
 //        val goAIQuestionActivityButton = findViewById<Button>(R.id.ai_question_btn)
