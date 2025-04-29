@@ -82,6 +82,7 @@ class QuizDatabaseHelper(context: Context) :
         }
     }
 
+
     // ---- Quiz Category Operations ----
 
     fun addQuizCategory(categoryName: String, description: String = ""): Long {
