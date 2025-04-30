@@ -15,7 +15,6 @@ import com.example.humanreactor.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.properties.Delegates
 
 class QuickThinkerMainActivity:AppCompatActivity(), AnswerDialogFragment.OnNextQuestionListener {
 
