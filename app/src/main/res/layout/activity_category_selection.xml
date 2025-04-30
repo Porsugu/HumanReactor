@@ -31,4 +31,13 @@
         android:textColor="@color/main"
         style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
 
+    <Button
+        android:id="@+id/btn_back"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back"
+        android:layout_marginTop="16dp"
+        android:textColor="@color/main"
+        style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
+
 </LinearLayout>

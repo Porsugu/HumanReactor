@@ -80,8 +80,8 @@ class ResultActivity : AppCompatActivity() {
             // Add record associated with the category
             val quizRecord = QuizFinishRecord(
                 categoryId = catID,
-                avgAnswerTime = (timeList.sum().toFloat() / questionTotal.toFloat())/1000 ,
-                accuracy = correctRate * 100,
+                avgAnswerTime = (timeList.sum().toFloat() / questionTotal.toFloat()) ,
+                accuracy = correctRate,
                 totalQuestions = questionTotal
             )
             quizDatabaseHelper.addQuizRecord(quizRecord)
