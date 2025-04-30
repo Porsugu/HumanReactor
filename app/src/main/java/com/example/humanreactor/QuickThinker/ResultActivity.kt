@@ -10,6 +10,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.example.humanreactor.MainActivity
 import com.example.humanreactor.R
+import com.example.humanreactor.databases.QuizDatabaseHelper
+import com.example.humanreactor.databases.QuizFinishRecord
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
@@ -31,6 +33,10 @@ class ResultActivity : AppCompatActivity() {
     private var correctRate: Float = 0F
     private lateinit var timeList : List<Long>
     private lateinit var sharedPrefManager: SharedPrefManager
+    private lateinit var quizDatabaseHelper : QuizDatabaseHelper
+
+
+    private lateinit var category : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +46,7 @@ class ResultActivity : AppCompatActivity() {
         pieChart = findViewById(R.id.correctnessChart)
         lineChart = findViewById(R.id.responseTimeChart)
 
-        // set the back to amin button
-        findViewById<ConstraintLayout>(R.id.result_back_btn).setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
+        quizDatabaseHelper = QuizDatabaseHelper(this)
 
         // initialize shared preference manager
         sharedPrefManager = SharedPrefManager(this)
@@ -57,6 +58,58 @@ class ResultActivity : AppCompatActivity() {
 
         // cal the correct answer rate
         correctRate = correctAnswers.toFloat() / questionTotal.toFloat()
+
+        // set the back to amin button
+        findViewById<ConstraintLayout>(R.id.result_back_btn).setOnClickListener {
+
+            //  add quiz category into the data base
+            val catID = quizDatabaseHelper.addQuizCategory(sharedPrefManager.getCategory().toString()).toInt()
+
+            // Add record associated with the category
+            val quizRecord =QuizFinishRecord(
+                categoryId = catID,
+                avgAnswerTime = timeList.sum().toFloat() / questionTotal.toFloat(),
+                accuracy = correctRate,
+                totalQuestions = questionTotal
+            )
+            quizDatabaseHelper.addQuizRecord(quizRecord)
+
+            // showing these in log format to check
+            val categories = quizDatabaseHelper.getAllQuizCategories()
+            for (category in categories) {
+                Log.d("Category", "ID: ${category.id}, Name: ${category.name}")
+
+                val records = quizDatabaseHelper.getQuizRecordsByCategory(category.id)
+
+                if (records.isNotEmpty()) {
+                    val times = records.map { it.avgAnswerTime }
+                    val averageTime = times.sum() / times.size
+
+                    Log.d("CategoryStats", "Average Answer Time: $averageTime seconds")
+
+                    for (record in records) {
+                        Log.d("Record", """
+                            Record ID: ${record.id}
+                            Category ID: ${record.categoryId}
+                            Avg Time: ${record.avgAnswerTime}
+                            Accuracy: ${record.accuracy}
+                            Total Questions: ${record.totalQuestions}
+                            Timestamp: ${record.timestamp}
+                        """.trimIndent())
+                    }
+                }
+                else {
+                    Log.d("CategoryStats", "No quiz records found for category '${category.name}'")
+                }
+            }
+
+
+            // jumping back to main page
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+
 
         Log.d("Result Activity", "The correct Rate here is $correctRate")
 

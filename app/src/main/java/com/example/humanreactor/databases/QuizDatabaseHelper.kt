@@ -53,7 +53,7 @@ class QuizDatabaseHelper(context: Context) :
                 $COLUMN_QUIZ_AVG_TIME REAL NOT NULL,
                 $COLUMN_QUIZ_ACCURACY REAL NOT NULL,
                 $COLUMN_QUIZ_TOTAL_QUESTIONS INTEGER NOT NULL,
-                $COLUMN_QUIZ_TIMESTAMP INTEGER NOT NULL,
+    $COLUMN_QUIZ_TIMESTAMP INTEGER NOT NULL,
                 FOREIGN KEY ($COLUMN_QUIZ_CATEGORY_ID) REFERENCES $TABLE_QUIZ_CATEGORIES($COLUMN_CATEGORY_ID)
             )
         """.trimIndent()
@@ -84,11 +84,10 @@ class QuizDatabaseHelper(context: Context) :
 
     // ---- Quiz Category Operations ----
 
-    fun addQuizCategory(categoryName: String, description: String = ""): Long {
+    fun addQuizCategory(categoryName: String): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_CATEGORY_NAME, categoryName)
-            put(COLUMN_CATEGORY_DESCRIPTION, description)
         }
 
         val id = db.insert(TABLE_QUIZ_CATEGORIES, null, values)
@@ -106,8 +105,7 @@ class QuizDatabaseHelper(context: Context) :
             do {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID))
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_NAME))
-                val description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_DESCRIPTION))
-                categories.add(QuizCategory(id, name, description))
+                categories.add(QuizCategory(id, name))
             } while (cursor.moveToNext())
         }
 
@@ -126,7 +124,7 @@ class QuizDatabaseHelper(context: Context) :
             val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID))
             val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_NAME))
             val description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_DESCRIPTION))
-            category = QuizCategory(id, name, description)
+            category = QuizCategory(id, name)
         }
 
         cursor.close()
@@ -134,57 +132,56 @@ class QuizDatabaseHelper(context: Context) :
         return category
     }
 
-    fun updateQuizCategory(category: QuizCategory): Int {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_CATEGORY_NAME, category.name)
-            put(COLUMN_CATEGORY_DESCRIPTION, category.description)
-        }
+//    fun updateQuizCategory(category: QuizCategory): Int {
+//        val db = this.writableDatabase
+//        val values = ContentValues().apply {
+//            put(COLUMN_CATEGORY_NAME, category.name)
+//        }
+//
+//        val affectedRows = db.update(
+//            TABLE_QUIZ_CATEGORIES,
+//            values,
+//            "$COLUMN_CATEGORY_ID = ?",
+//            arrayOf(category.id.toString())
+//        )
+//        db.close()
+//        return affectedRows
+//    }
 
-        val affectedRows = db.update(
-            TABLE_QUIZ_CATEGORIES,
-            values,
-            "$COLUMN_CATEGORY_ID = ?",
-            arrayOf(category.id.toString())
-        )
-        db.close()
-        return affectedRows
-    }
-
-    fun deleteQuizCategory(categoryId: Int): Boolean {
-        val db = this.writableDatabase
-
-        // Delete related questions
-        db.delete(
-            TABLE_QUIZ_QUESTIONS,
-            "$COLUMN_QUESTION_CATEGORY_ID = ?",
-            arrayOf(categoryId.toString())
-        )
-
-        // Delete related quiz records
-        db.delete(
-            TABLE_QUIZ_RECORDS,
-            "$COLUMN_QUIZ_CATEGORY_ID = ?",
-            arrayOf(categoryId.toString())
-        )
-
-        // Delete the category
-        val result = db.delete(
-            TABLE_QUIZ_CATEGORIES,
-            "$COLUMN_CATEGORY_ID = ?",
-            arrayOf(categoryId.toString())
-        )
-
-        db.close()
-        return result > 0
-    }
+//    fun deleteQuizCategory(categoryId: Int): Boolean {
+//        val db = this.writableDatabase
+//
+//        // Delete related questions
+//        db.delete(
+//            TABLE_QUIZ_QUESTIONS,
+//            "$COLUMN_QUESTION_CATEGORY_ID = ?",
+//            arrayOf(categoryId.toString())
+//        )
+//
+//        // Delete related quiz records
+//        db.delete(
+//            TABLE_QUIZ_RECORDS,
+//            "$COLUMN_QUIZ_CATEGORY_ID = ?",
+//            arrayOf(categoryId.toString())
+//        )
+//
+//        // Delete the category
+//        val result = db.delete(
+//            TABLE_QUIZ_CATEGORIES,
+//            "$COLUMN_CATEGORY_ID = ?",
+//            arrayOf(categoryId.toString())
+//        )
+//
+//        db.close()
+//        return result > 0
+//    }
 
     // ---- Quiz Record Operations ----
 
-    fun addQuizRecord(quizRecord: QuizRecord): Long {
+    fun addQuizRecord(quizRecord: QuizFinishRecord): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
-            put(COLUMN_QUIZ_CATEGORY_ID, quizRecord.categoryId)
+            put(COLUMN_CATEGORY_ID, quizRecord.categoryId)
             put(COLUMN_QUIZ_AVG_TIME, quizRecord.avgAnswerTime)
             put(COLUMN_QUIZ_ACCURACY, quizRecord.accuracy)
             put(COLUMN_QUIZ_TOTAL_QUESTIONS, quizRecord.totalQuestions)
@@ -196,8 +193,8 @@ class QuizDatabaseHelper(context: Context) :
         return id
     }
 
-    fun getQuizRecordsByCategory(categoryId: Int, limit: Int = 10): List<QuizRecord> {
-        val records = mutableListOf<QuizRecord>()
+    fun getQuizRecordsByCategory(categoryId: Int, limit: Int = 10): List<QuizFinishRecord> {
+        val records = mutableListOf<QuizFinishRecord>()
         val db = this.readableDatabase
         val query = """
             SELECT * FROM $TABLE_QUIZ_RECORDS 
@@ -212,12 +209,12 @@ class QuizDatabaseHelper(context: Context) :
             do {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ID))
                 val catId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_CATEGORY_ID))
-                val avgTime = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_AVG_TIME))
-                val accuracy = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ACCURACY))
+                val avgTime = cursor.getFloat(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_AVG_TIME))
+                val accuracy = cursor.getFloat(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ACCURACY))
                 val totalQuestions = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_TOTAL_QUESTIONS))
                 val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_TIMESTAMP))
 
-                records.add(QuizRecord(id, catId, avgTime, accuracy, totalQuestions, timestamp))
+                records.add(QuizFinishRecord(id, catId, avgTime, accuracy, totalQuestions, timestamp))
             } while (cursor.moveToNext())
         }
 
@@ -249,17 +246,18 @@ class QuizDatabaseHelper(context: Context) :
         return result
     }
 
-    fun deleteQuizRecord(quizId: Int): Boolean {
-        val db = this.writableDatabase
-        val result = db.delete(
-            TABLE_QUIZ_RECORDS,
-            "$COLUMN_QUIZ_ID = ?",
-            arrayOf(quizId.toString())
-        )
-        db.close()
-        return result > 0
-    }
+//    fun deleteQuizRecord(quizId: Int): Boolean {
+//        val db = this.writableDatabase
+//        val result = db.delete(
+//            TABLE_QUIZ_RECORDS,
+//            "$COLUMN_QUIZ_ID = ?",
+//            arrayOf(quizId.toString())
+//        )
+//        db.close()
+//        return result > 0
+//    }
 
+    /*
     // ---- Quiz Question Operations ----
 
     fun addQuestion(question: QuizQuestion): Long {
@@ -267,7 +265,6 @@ class QuizDatabaseHelper(context: Context) :
         val values = ContentValues().apply {
             put(COLUMN_QUESTION_TEXT, question.text)
             put(COLUMN_QUESTION_CATEGORY_ID, question.categoryId)
-            put(COLUMN_QUESTION_DIFFICULTY, question.difficulty)
         }
 
         val id = db.insert(TABLE_QUIZ_QUESTIONS, null, values)
@@ -286,9 +283,8 @@ class QuizDatabaseHelper(context: Context) :
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUESTION_ID))
                 val text = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_QUESTION_TEXT))
                 val catId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUESTION_CATEGORY_ID))
-                val difficulty = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUESTION_DIFFICULTY))
 
-                questions.add(QuizQuestion(id, text, catId, difficulty))
+                questions.add(QuizQuestion(id, text, catId))
             } while (cursor.moveToNext())
         }
 
@@ -302,7 +298,6 @@ class QuizDatabaseHelper(context: Context) :
         val values = ContentValues().apply {
             put(COLUMN_QUESTION_TEXT, question.text)
             put(COLUMN_QUESTION_CATEGORY_ID, question.categoryId)
-            put(COLUMN_QUESTION_DIFFICULTY, question.difficulty)
         }
 
         val affectedRows = db.update(
@@ -315,37 +310,38 @@ class QuizDatabaseHelper(context: Context) :
         return affectedRows
     }
 
-    fun deleteQuestion(questionId: Int): Boolean {
-        val db = this.writableDatabase
-        val result = db.delete(
-            TABLE_QUIZ_QUESTIONS,
-            "$COLUMN_QUESTION_ID = ?",
-            arrayOf(questionId.toString())
-        )
-        db.close()
-        return result > 0
-    }
+//    fun deleteQuestion(questionId: Int): Boolean {
+//        val db = this.writableDatabase
+//        val result = db.delete(
+//            TABLE_QUIZ_QUESTIONS,
+//            "$COLUMN_QUESTION_ID = ?",
+//            arrayOf(questionId.toString())
+//        )
+//        db.close()
+//        return result > 0
+//    }
+
+     */
 }
 
 // Data Classes
 data class QuizCategory(
     val id: Int = 0,
     val name: String,
-    val description: String = ""
 )
 
-data class QuizRecord(
+data class QuizFinishRecord(
     val id: Int = 0,
     val categoryId: Int,
-    val avgAnswerTime: Double,
-    val accuracy: Double,
+    val avgAnswerTime: Float,
+    val accuracy: Float,
     val totalQuestions: Int,
     val timestamp: Long = System.currentTimeMillis()
 )
 
-data class QuizQuestion(
-    val id: Int = 0,
-    val text: String,
-    val categoryId: Int,
-    val difficulty: Int
-)
+
+//data class QuizQuestion(
+//    val id: Int = 0,
+//    val text: String,
+//    val categoryId: Int
+//)

@@ -4,8 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import com.example.humanreactor.databases.Action
 import com.example.humanreactor.databases.ActionDatabaseHelper
-import com.example.humanreactor.databases.Performance
-import com.example.humanreactor.databases.PerformanceRecord
+import com.example.humanreactor.databases.QuizRecord
 import java.util.Calendar
 import kotlin.random.Random
 
@@ -45,7 +44,7 @@ object DatabaseUtil {
             val accuracy = Random.nextDouble(0.5, 1.0) // 50%-100%
 
             // 创建记录并设置时间戳
-            val record = PerformanceRecord(
+            val record = QuizRecord(
                 categoryId = categoryId,
                 responseTime = responseTime,
                 accuracy = accuracy,

@@ -134,7 +134,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
-import com.example.humanreactor.databases.PerformanceRecord
+import com.example.humanreactor.databases.QuizRecord
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -160,7 +160,7 @@ class PixelHistoryChartView @JvmOverloads constructor(
         color = Color.parseColor("#66363636")
     }
 
-    private val records = mutableListOf<PerformanceRecord>()
+    private val records = mutableListOf<QuizRecord>()
     private var maxValue: Float = 1f
     private var unit: String = ""
     private var color: Int = Color.GREEN
@@ -169,7 +169,7 @@ class PixelHistoryChartView @JvmOverloads constructor(
     private val pixelSize = 8
     private val pixelGap = 2
 
-    fun setRecords(records: List<PerformanceRecord>, maxValue: Float = 1f, unit: String = "", color: Int = Color.GREEN) {
+    fun setRecords(records: List<QuizRecord>, maxValue: Float = 1f, unit: String = "", color: Int = Color.GREEN) {
         this.records.clear()
         this.records.addAll(records)
         this.maxValue = maxValue

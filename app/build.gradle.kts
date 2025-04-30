@@ -34,6 +34,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 
@@ -57,6 +61,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.androidx.room.runtime.android)
 
     // CameraX
     val cameraxVersion = "1.2.3"  // 固定使用1.2.3版本，這個版本的API更穩定
@@ -121,6 +126,14 @@ dependencies {
 
     // MP Android Chart
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    // room dependenies
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
 
 
 

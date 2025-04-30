@@ -38,9 +38,6 @@
         <activity
             android:name=".PoseDetectionActivity"
             android:exported="false" />
-        <activity
-            android:name=".AIQuestionActivity"
-            android:exported="false" />
                 <activity
             android:name=".QuickThinkerActivity"
             android:exported="false" />
