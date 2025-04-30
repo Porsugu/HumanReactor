@@ -135,6 +135,21 @@ class QuizDatabaseHelper(context: Context) :
         return category
     }
 
+    fun getCategoryIdByName(categoryName: String): Int? {
+        val db = this.readableDatabase
+        val query = "SELECT $COLUMN_CATEGORY_ID FROM $TABLE_QUIZ_CATEGORIES WHERE $COLUMN_CATEGORY_NAME = ?"
+        val cursor = db.rawQuery(query, arrayOf(categoryName))
+
+        var categoryId: Int? = null
+        if (cursor.moveToFirst()) {
+            categoryId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID))
+        }
+
+        cursor.close()
+        db.close()
+        return categoryId
+    }
+
     fun updateQuizCategory(category: QuizCategory): Int {
         val db = this.writableDatabase
         val values = ContentValues().apply {
