@@ -108,7 +108,7 @@ class QuizDatabaseHelper(context: Context) :
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID))
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_NAME))
                 val description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_DESCRIPTION))
-                categories.add(QuizCategory(id, name, description))
+                categories.add(QuizCategory(id, name))
             } while (cursor.moveToNext())
         }
 
@@ -127,7 +127,7 @@ class QuizDatabaseHelper(context: Context) :
             val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_ID))
             val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_NAME))
             val description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY_DESCRIPTION))
-            category = QuizCategory(id, name, description)
+            category = QuizCategory(id, name)
         }
 
         cursor.close()
@@ -154,7 +154,6 @@ class QuizDatabaseHelper(context: Context) :
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_CATEGORY_NAME, category.name)
-            put(COLUMN_CATEGORY_DESCRIPTION, category.description)
         }
 
         val affectedRows = db.update(
@@ -197,7 +196,7 @@ class QuizDatabaseHelper(context: Context) :
 
     // ---- Quiz Record Operations ----
 
-    fun addQuizRecord(quizRecord: QuizRecord): Long {
+    fun addQuizRecord(quizRecord: QuizFinishRecord): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_QUIZ_CATEGORY_ID, quizRecord.categoryId)
@@ -212,8 +211,8 @@ class QuizDatabaseHelper(context: Context) :
         return id
     }
 
-    fun getQuizRecordsByCategory(categoryId: Int, limit: Int = 10): List<QuizRecord> {
-        val records = mutableListOf<QuizRecord>()
+    fun getQuizRecordsByCategory(categoryId: Int, limit: Int = 10): List<QuizFinishRecord> {
+        val records = mutableListOf<QuizFinishRecord>()
         val db = this.readableDatabase
         val query = """
             SELECT * FROM $TABLE_QUIZ_RECORDS 
@@ -228,12 +227,12 @@ class QuizDatabaseHelper(context: Context) :
             do {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ID))
                 val catId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_CATEGORY_ID))
-                val avgTime = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_AVG_TIME))
-                val accuracy = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ACCURACY))
+                val avgTime = cursor.getFloat(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_AVG_TIME))
+                val accuracy = cursor.getFloat(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_ACCURACY))
                 val totalQuestions = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_TOTAL_QUESTIONS))
                 val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_QUIZ_TIMESTAMP))
 
-                records.add(QuizRecord(id, catId, avgTime, accuracy, totalQuestions, timestamp))
+                records.add(QuizFinishRecord(id, catId, avgTime, accuracy, totalQuestions, timestamp))
             } while (cursor.moveToNext())
         }
 
@@ -242,7 +241,7 @@ class QuizDatabaseHelper(context: Context) :
         return records
     }
 
-    fun getAveragePerformanceByCategory(categoryId: Int): Pair<Double, Double>? {
+    fun getAveragePerformanceByCategory(categoryId: Int): Pair<Float, Float>? {
         val db = this.readableDatabase
         val query = """
             SELECT AVG($COLUMN_QUIZ_AVG_TIME) as avg_time, 
@@ -252,11 +251,11 @@ class QuizDatabaseHelper(context: Context) :
         """.trimIndent()
 
         val cursor = db.rawQuery(query, arrayOf(categoryId.toString()))
-        var result: Pair<Double, Double>? = null
+        var result: Pair<Float, Float>? = null
 
         if (cursor.moveToFirst()) {
-            val avgTime = cursor.getDouble(cursor.getColumnIndexOrThrow("avg_time"))
-            val avgAccuracy = cursor.getDouble(cursor.getColumnIndexOrThrow("avg_accuracy"))
+            val avgTime = cursor.getFloat(cursor.getColumnIndexOrThrow("avg_time"))
+            val avgAccuracy = cursor.getFloat(cursor.getColumnIndexOrThrow("avg_accuracy"))
             result = Pair(avgTime, avgAccuracy)
         }
 
@@ -347,14 +346,13 @@ class QuizDatabaseHelper(context: Context) :
 data class QuizCategory(
     val id: Int = 0,
     val name: String,
-    val description: String = ""
 )
 
-data class QuizRecord(
+data class QuizFinishRecord(
     val id: Int = 0,
     val categoryId: Int,
-    val avgAnswerTime: Double,
-    val accuracy: Double,
+    val avgAnswerTime: Float,
+    val accuracy: Float,
     val totalQuestions: Int,
     val timestamp: Long = System.currentTimeMillis()
 )

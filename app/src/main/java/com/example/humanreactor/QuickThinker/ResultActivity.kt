@@ -3,6 +3,7 @@ package com.example.humanreactor.QuickThinker
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +11,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.example.humanreactor.MainActivity
 import com.example.humanreactor.R
+import com.example.humanreactor.databases.QuizDatabaseHelper
+import com.example.humanreactor.databases.QuizFinishRecord
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
@@ -21,6 +24,8 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
+import java.sql.Date
+import java.util.Locale
 
 class ResultActivity : AppCompatActivity() {
 
@@ -31,24 +36,15 @@ class ResultActivity : AppCompatActivity() {
     private var correctRate: Float = 0F
     private lateinit var timeList : List<Long>
     private lateinit var sharedPrefManager: SharedPrefManager
+    private lateinit var quizDatabaseHelper : QuizDatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.quick_thinker_result_activity)
 
-        // initialize the chart
-        pieChart = findViewById(R.id.correctnessChart)
-        lineChart = findViewById(R.id.responseTimeChart)
-
-        // set the back to amin button
-        findViewById<ConstraintLayout>(R.id.result_back_btn).setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
-
-        // initialize shared preference manager
+        // initialize shared preference manager and database manager
         sharedPrefManager = SharedPrefManager(this)
+        quizDatabaseHelper = QuizDatabaseHelper(this)
 
         // calculate the correct answers with the values
         correctAnswers = sharedPrefManager.getCorrectNum()
@@ -59,6 +55,82 @@ class ResultActivity : AppCompatActivity() {
         correctRate = correctAnswers.toFloat() / questionTotal.toFloat()
 
         Log.d("Result Activity", "The correct Rate here is $correctRate")
+
+        // initialize the chart
+        pieChart = findViewById(R.id.correctnessChart)
+        lineChart = findViewById(R.id.responseTimeChart)
+
+        // set the back to amin button
+        findViewById<ConstraintLayout>(R.id.result_back_btn).setOnClickListener {
+
+
+            // search it if there are the same category names then no need to add the same cat name inside the data base
+            val categoryName = sharedPrefManager.getCategory().toString()
+            var catID = quizDatabaseHelper.getCategoryIdByName(categoryName)
+
+
+            //  add quiz category into the data base
+            if (catID == null) {
+                catID = quizDatabaseHelper.addQuizCategory(categoryName).toInt()
+            }
+
+            //  add quiz category into the data base
+//            val catID = quizDatabaseHelper.addQuizCategory(sharedPrefManager.getCategory().toString()).toInt()
+
+            // Add record associated with the category
+            val quizRecord = QuizFinishRecord(
+                categoryId = catID,
+                avgAnswerTime = (timeList.sum().toFloat() / questionTotal.toFloat())/1000 ,
+                accuracy = correctRate * 100,
+                totalQuestions = questionTotal
+            )
+            quizDatabaseHelper.addQuizRecord(quizRecord)
+
+            // showing these in log format to check
+            val categories = quizDatabaseHelper.getAllQuizCategories()
+            for (category in categories) {
+                Log.d("Category", "==========================")
+                Log.d("Category", "Category ID: ${category.id}")
+                Log.d("Category", "Name: ${category.name}")
+
+                // Get and log average performance
+                val avgResult = quizDatabaseHelper.getAveragePerformanceByCategory(category.id)
+                if (avgResult != null) {
+                    val avgTime = avgResult.first
+                    val avgAccuracy = avgResult.second
+
+                    Log.d("Category", "Average Answer Time: ${"%.2f".format(avgTime)} seconds")
+                    Log.d("Category", "Average Accuracy: ${"%.2f".format(avgAccuracy * 100)}%")
+                } else {
+                    Log.d("Category", "No records available to calculate average performance.")
+                }
+
+                // Get all records under this category by using log cat
+                val records = quizDatabaseHelper.getQuizRecordsByCategory(category.id, Int.MAX_VALUE)
+                if (records.isNotEmpty()) {
+                    for (record in records) {
+                        val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            .format(Date(record.timestamp))
+
+                        Log.d("Record", """
+                            ➤ Record ID: ${record.id}
+                            ➤ Avg Time: ${"%.2f".format(record.avgAnswerTime)} sec
+                            ➤ Accuracy: ${"%.2f".format(record.accuracy)}%
+                            ➤ Total Questions: ${record.totalQuestions}
+                            ➤ Taken at: $date
+            """.trimIndent())
+                    }
+                } else {
+                    Log.d("Record", "No quiz records found for this category.")
+                }
+            }
+
+            // go back to main activity
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+
 
         // setting up pie chart
         setupPieChart(correctRate)
@@ -232,7 +304,7 @@ class ResultActivity : AppCompatActivity() {
             })
 
             // create a single dataset for all answers
-            val dataset = LineDataSet(entries, "Response Time (ms)").apply{
+            val dataset = LineDataSet(entries, "Response Time (s)").apply{
 
                 color = Color.parseColor("#F4A261")
                 // set the circle color for the points
